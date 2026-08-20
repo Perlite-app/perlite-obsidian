@@ -74,11 +74,13 @@ export function renderInteractiveTaskRow(
     },
   });
   row.addClass("perlite-list-view__row");
-  // Clicking the status icon or a tag chip must not *also* open the note — both are
-  // their own real `<button>`/`<a>` elements that already handle their own click, so
+  // Clicking the status icon, a tag chip, or (Wave 3) a kanban/calendar drag handle must
+  // not *also* open the note — the first two are their own real `<button>`/`<a>`
+  // elements that already handle their own click, and the handle's own click fires (with
+  // no movement) whenever a drag is grabbed and released without actually dragging, so
   // this only opens the note when the click landed on plain row chrome.
   row.addEventListener("click", (event) => {
-    if ((event.target as HTMLElement).closest(".perlite-task-row__status, .perlite-tag-chip")) return;
+    if ((event.target as HTMLElement).closest(".perlite-task-row__status, .perlite-tag-chip, .perlite-drag-handle")) return;
     void openTaskInEditor(app, task, file);
   });
   attachHoverPreview(row, app, hoverParent, task, file);

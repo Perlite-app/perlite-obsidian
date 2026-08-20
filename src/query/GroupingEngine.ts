@@ -123,7 +123,10 @@ function groupBySentinelLastKey(
   return sortedKeys.map((k) => ({ key: k, tasks: buckets.get(k)! }));
 }
 
-const STATUS_GROUP_ORDER: readonly TaskStatusKind[] = ["todo", "custom", "done", "cancelled"];
+/** Exported for the Wave 3 kanban board, which needs every status column present (even
+ * empty ones, so a status with no current tasks is still a valid drop target) rather
+ * than just the non-empty buckets `group` itself returns. */
+export const STATUS_GROUP_ORDER: readonly TaskStatusKind[] = ["todo", "custom", "done", "cancelled"];
 
 function groupByStatus(tasks: readonly ParsedTask[]): TaskGroup[] {
   const groups: TaskGroup[] = [];
