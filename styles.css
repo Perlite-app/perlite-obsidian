@@ -311,3 +311,122 @@
   text-align: center;
   color: var(--text-muted);
 }
+
+/* ---- Smart list editor modal (Wave 2 chunk 10) --------------------------------------- */
+.perlite-icon-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: var(--perlite-spacing-sm);
+  color: var(--text-muted);
+}
+.perlite-icon-preview svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perlite-editor-notice {
+  padding: var(--perlite-spacing-sm) var(--perlite-spacing-md);
+  margin-bottom: var(--perlite-spacing-md);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-criteria-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--perlite-spacing-xs);
+  margin-bottom: var(--perlite-spacing-sm);
+}
+
+.perlite-criterion-row {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-sm);
+  padding: var(--perlite-spacing-xs) 0;
+}
+
+.perlite-criterion-row__not {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.perlite-criterion-row__value {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-xs);
+  flex: 1;
+}
+
+.perlite-criterion-row__remove {
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-ui-medium);
+  line-height: 1;
+  padding: 0 var(--perlite-spacing-xs);
+}
+.perlite-criterion-row__remove:hover {
+  color: var(--text-error);
+}
+
+/* ---- Smart lists hub + detail view (Wave 2 chunk 10) ---------------------------------- */
+.perlite-smart-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-sm);
+  padding: var(--perlite-spacing-sm);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.perlite-smart-list-row:hover {
+  background-color: var(--background-modifier-hover);
+}
+.perlite-smart-list-row__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.perlite-smart-list-row__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.perlite-smart-list-row__name {
+  flex: 1;
+  color: var(--text-normal);
+}
+.perlite-smart-list-row__count {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+.perlite-smart-list-row__hidden {
+  opacity: 0.5;
+}
+
+.perlite-smart-lists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.perlite-smart-lists-section-title {
+  margin: var(--perlite-spacing-md) 0 var(--perlite-spacing-xs) 0;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}

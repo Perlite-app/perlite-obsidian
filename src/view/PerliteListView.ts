@@ -1,14 +1,9 @@
-import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
-import type { ParsedTask } from "../model/ParsedTask.js";
-import { renderTaskLine } from "../design/renderTaskLine.js";
-import { parseDocument } from "../parser/DocumentParser.js";
+import { ItemView, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SEGMENT_TITLE, DEFAULT_SEGMENTS, matchesDefaultSegment } from "../query/defaultSegments.js";
-import * as RecurrenceEngine from "../recurrence/RecurrenceEngine.js";
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
-import { DocumentEditError } from "../write/documentEditor.js";
-import { planVaultScan } from "../write/vaultScan.js";
-import { writeDocumentEdit } from "../write/vaultWriter.js";
+import { scanVaultTasks, type LocatedTask } from "../vaultTaskScan.js";
+import { renderInteractiveTaskRow } from "./taskRowInteractions.js";
 import type PerlitePlugin from "../main.js";
 
 /**
@@ -25,11 +20,6 @@ import type PerlitePlugin from "../main.js";
  * inline editing yet — those are later waves/chunks per the plan, not gaps in this one.
  */
 export const PERLITE_LIST_VIEW_TYPE = "perlite-list-view";
-
-interface LocatedTask {
-  readonly task: ParsedTask;
-  readonly file: TFile;
-}
 
 export class PerliteListView extends ItemView {
   private readonly plugin: PerlitePlugin;
@@ -66,8 +56,8 @@ export class PerliteListView extends ItemView {
     container.empty();
     container.addClass("perlite-list-view");
 
-    const allPaths = this.app.vault.getMarkdownFiles().map((file) => file.path);
-    const { included, conflictPaths } = planVaultScan(allPaths, this.plugin.settings.excludedFolders);
+    const configuration = parserConfiguration(this.plugin.settings);
+    const { located, conflictPaths } = await scanVaultTasks(this.app, this.plugin.settings.excludedFolders, configuration);
 
     if (conflictPaths.length > 0) {
       container.createDiv({
@@ -77,19 +67,6 @@ export class PerliteListView extends ItemView {
             ? "1 sync-conflict file was found and excluded — resolve it in your sync client."
             : `${conflictPaths.length} sync-conflict files were found and excluded — resolve them in your sync client.`,
       });
-    }
-
-    const configuration = parserConfiguration(this.plugin.settings);
-    const includedSet = new Set(included);
-    const files = this.app.vault.getMarkdownFiles().filter((file) => includedSet.has(file.path));
-
-    const located: LocatedTask[] = [];
-    for (const file of files) {
-      const content = await this.app.vault.cachedRead(file);
-      const document = parseDocument(content, file.path, configuration);
-      for (const task of document.tasks) {
-        located.push({ task, file });
-      }
     }
 
     if (located.length === 0) {
@@ -122,55 +99,6 @@ export class PerliteListView extends ItemView {
   }
 
   private renderRow(container: HTMLElement, entry: LocatedTask): void {
-    const row = renderTaskLine({
-      task: entry.task,
-      onStatusClick: (task) => {
-        void this.completeTask(task, entry.file);
-      },
-    });
-    row.addClass("perlite-list-view__row");
-    // Clicking the status icon or a tag chip must not *also* open the note — both are
-    // their own real `<button>`/`<a>` elements that already handle their own click, so
-    // this only opens the note when the click landed on plain row chrome.
-    row.addEventListener("click", (event) => {
-      if ((event.target as HTMLElement).closest(".perlite-task-row__status, .perlite-tag-chip")) return;
-      void this.openTask(entry.task, entry.file);
-    });
-    container.appendChild(row);
-  }
-
-  private async completeTask(task: ParsedTask, file: TFile): Promise<void> {
-    const configuration = parserConfiguration(this.plugin.settings);
-    const today = todayCalendarDate();
-
-    let result: RecurrenceEngine.CompletionResult;
-    try {
-      result = RecurrenceEngine.complete(task, today, configuration);
-    } catch (error) {
-      new Notice(error instanceof RecurrenceEngine.CompletionError ? `Couldn't complete: ${error.message}` : "Couldn't complete task.");
-      return;
-    }
-
-    try {
-      await writeDocumentEdit(
-        this.app,
-        file,
-        { locate: task.raw, replacement: result.completedLine, insert: result.nextInstanceLine ?? undefined },
-        task.location?.lineIndex ?? null,
-      );
-    } catch (error) {
-      new Notice(
-        error instanceof DocumentEditError
-          ? "Couldn't save — that task changed since Perlite last read this file."
-          : "Couldn't save that change.",
-      );
-    }
-
-    await this.refresh();
-  }
-
-  private async openTask(task: ParsedTask, file: TFile): Promise<void> {
-    const leaf = this.app.workspace.getLeaf(false);
-    await leaf.openFile(file, task.location !== null ? { eState: { line: task.location.lineIndex } } : undefined);
+    renderInteractiveTaskRow(container, this.app, this.plugin, entry.task, entry.file, () => this.refresh());
   }
 }
