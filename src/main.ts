@@ -37,6 +37,43 @@ export default class PerlitePlugin extends Plugin {
         void this.activateSmartListsView();
       },
     });
+    this.registerListNavCommands();
+  }
+
+  /** Wave 2 chunk 11: every `ListKeyboardNav` action is *also* registered here via
+   * `checkCallback`, so Obsidian's own Hotkeys settings can show, and let a user
+   * rebind, these bindings — `ListKeyboardNav.attach`'s `Scope` registration is what
+   * makes the bare unmodified letter actually fire without a modifier, which
+   * `addCommand` alone can't do for a single-letter binding with no modifier key, but
+   * both paths call the exact same `ListKeyboardNav` methods, so they can never drift
+   * out of sync with each other. `checkCallback` returns `false` (command hidden/
+   * disabled) whenever no Perlite list view is currently active. */
+  private registerListNavCommands(): void {
+    const withActiveNav = (action: (nav: PerliteListView["keyboardNav"]) => void) => (checking: boolean): boolean => {
+      const nav = this.activeListNav();
+      if (nav === null) return false;
+      if (!checking) action(nav);
+      return true;
+    };
+    this.addCommand({ id: "select-next-task", name: "Select next task", checkCallback: withActiveNav((nav) => nav.moveSelection(1)) });
+    this.addCommand({ id: "select-previous-task", name: "Select previous task", checkCallback: withActiveNav((nav) => nav.moveSelection(-1)) });
+    this.addCommand({ id: "open-selected-task", name: "Open selected task's note", checkCallback: withActiveNav((nav) => void nav.openSelected()) });
+    this.addCommand({ id: "complete-selected-task", name: "Complete selected task", checkCallback: withActiveNav((nav) => void nav.completeSelected()) });
+    this.addCommand({ id: "reschedule-selected-task", name: "Reschedule selected task", checkCallback: withActiveNav((nav) => nav.rescheduleSelected()) });
+    this.addCommand({ id: "tag-selected-task", name: "Add tag to selected task", checkCallback: withActiveNav((nav) => nav.tagSelected()) });
+    this.addCommand({
+      id: "toggle-selected-task-context",
+      name: "Toggle selected task's inline context",
+      checkCallback: withActiveNav((nav) => nav.toggleExpanded()),
+    });
+  }
+
+  private activeListNav(): PerliteListView["keyboardNav"] | null {
+    const listView = this.app.workspace.getActiveViewOfType(PerliteListView);
+    if (listView !== null) return listView.keyboardNav;
+    const detailView = this.app.workspace.getActiveViewOfType(PerliteSmartListDetailView);
+    if (detailView !== null) return detailView.keyboardNav;
+    return null;
   }
 
   onunload(): void {}

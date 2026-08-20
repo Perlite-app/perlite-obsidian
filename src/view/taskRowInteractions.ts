@@ -50,7 +50,8 @@ export async function openTaskInEditor(app: App, task: ParsedTask, file: TFile):
 
 /** Builds and appends one interactive task row: click the status icon to complete
  * (`onAfterWrite` re-renders the caller's own view once the write settles), click
- * anywhere else on the row to open the source note. */
+ * anywhere else on the row to open the source note. Returns the row element so the
+ * caller can also register it with `ListKeyboardNav` (Wave 2 chunk 11). */
 export function renderInteractiveTaskRow(
   container: HTMLElement,
   app: App,
@@ -58,7 +59,7 @@ export function renderInteractiveTaskRow(
   task: ParsedTask,
   file: TFile,
   onAfterWrite: () => void | Promise<void>,
-): void {
+): HTMLElement {
   const row = renderTaskLine({
     task,
     onStatusClick: (t) => {
@@ -77,4 +78,5 @@ export function renderInteractiveTaskRow(
     void openTaskInEditor(app, task, file);
   });
   container.appendChild(row);
+  return row;
 }

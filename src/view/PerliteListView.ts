@@ -3,6 +3,7 @@ import { DEFAULT_SEGMENT_TITLE, DEFAULT_SEGMENTS, matchesDefaultSegment } from "
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
 import { scanVaultTasks, type LocatedTask } from "../vaultTaskScan.js";
+import { ListKeyboardNav, type KeyboardNavRow } from "./ListKeyboardNav.js";
 import { renderInteractiveTaskRow } from "./taskRowInteractions.js";
 import type PerlitePlugin from "../main.js";
 
@@ -16,17 +17,20 @@ import type PerlitePlugin from "../main.js";
  *
  * Click a `.todo` status icon to complete (regenerating recurrence via the ported
  * `RecurrenceEngine.complete`); click anywhere else on a row to open its source note at
- * the task's own line. There is deliberately no tap-to-uncomplete, keyboard triage, or
- * inline editing yet — those are later waves/chunks per the plan, not gaps in this one.
+ * the task's own line. Wave 2 chunk 11 adds keyboard-first triage (`J`/`K`/arrows/
+ * `Enter`/`C`/`D`/`T`/`Shift+Space`) on top — see `ListKeyboardNav.ts`.
  */
 export const PERLITE_LIST_VIEW_TYPE = "perlite-list-view";
 
 export class PerliteListView extends ItemView {
   private readonly plugin: PerlitePlugin;
+  readonly keyboardNav: ListKeyboardNav;
+  private contentAreaEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: PerlitePlugin) {
     super(leaf);
     this.plugin = plugin;
+    this.keyboardNav = new ListKeyboardNav(this, this.app, plugin, () => this.refresh());
   }
 
   getViewType(): string {
@@ -42,6 +46,12 @@ export class PerliteListView extends ItemView {
   }
 
   async onOpen(): Promise<void> {
+    const root = this.containerEl.children[1] as HTMLElement;
+    root.empty();
+    root.addClass("perlite-list-view");
+    const liveRegion = root.createDiv({ cls: "perlite-visually-hidden", attr: { "aria-live": "polite" } });
+    this.contentAreaEl = root.createDiv();
+    this.keyboardNav.attach(this.contentAreaEl, liveRegion);
     await this.refresh();
   }
 
@@ -52,9 +62,9 @@ export class PerliteListView extends ItemView {
    * later performance pass once real vault sizes make a full re-read/re-parse visibly
    * slow, not before). */
   async refresh(): Promise<void> {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentAreaEl;
+    if (container === null) return; // onOpen hasn't run yet
     container.empty();
-    container.addClass("perlite-list-view");
 
     const configuration = parserConfiguration(this.plugin.settings);
     const { located, conflictPaths } = await scanVaultTasks(this.app, this.plugin.settings.excludedFolders, configuration);
@@ -71,11 +81,13 @@ export class PerliteListView extends ItemView {
 
     if (located.length === 0) {
       container.createDiv({ cls: "perlite-empty-state", text: "No tasks found." });
+      this.keyboardNav.setRows([]);
       return;
     }
 
     const today = todayCalendarDate();
     let anySegmentRendered = false;
+    const navRows: KeyboardNavRow[] = [];
 
     for (const segment of DEFAULT_SEGMENTS) {
       const matching = located.filter((entry) => matchesDefaultSegment(entry.task, segment, today));
@@ -89,16 +101,18 @@ export class PerliteListView extends ItemView {
       });
       const list = section.createDiv({ cls: "perlite-segment__list" });
       for (const entry of matching) {
-        this.renderRow(list, entry);
+        navRows.push(this.renderRow(list, entry));
       }
     }
 
     if (!anySegmentRendered) {
       container.createDiv({ cls: "perlite-empty-state", text: "All caught up." });
     }
+    this.keyboardNav.setRows(navRows);
   }
 
-  private renderRow(container: HTMLElement, entry: LocatedTask): void {
-    renderInteractiveTaskRow(container, this.app, this.plugin, entry.task, entry.file, () => this.refresh());
+  private renderRow(container: HTMLElement, entry: LocatedTask): KeyboardNavRow {
+    const rowEl = renderInteractiveTaskRow(container, this.app, this.plugin, entry.task, entry.file, () => this.refresh());
+    return { task: entry.task, file: entry.file, rowEl };
   }
 }

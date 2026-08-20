@@ -430,3 +430,38 @@
   letter-spacing: 0.02em;
   color: var(--text-muted);
 }
+
+/* ---- Keyboard-first triage (Wave 2 chunk 11) ------------------------------------------ */
+.perlite-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.perlite-row--selected {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-row-expansion {
+  margin: 0 0 var(--perlite-spacing-xs) var(--perlite-spacing-md);
+  padding: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
+  border-left: 2px solid var(--background-modifier-border);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.perlite-row-expansion__raw {
+  display: block;
+  margin-top: var(--perlite-spacing-xs);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
