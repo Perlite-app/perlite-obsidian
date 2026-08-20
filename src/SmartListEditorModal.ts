@@ -21,7 +21,7 @@ import {
   type MatchMode,
 } from "./query/CriterionDraft.js";
 import { GROUP_KEY_VALUES, type GroupKey } from "./query/GroupingEngine.js";
-import { createSmartList, type SmartList } from "./query/SmartList.js";
+import { createSmartList, SMART_LIST_LENS_VALUES, type SmartList, type SmartListLens } from "./query/SmartList.js";
 import { SORT_KEY_VALUES, sortCriterion, type SortCriterion, type SortDirection, type SortKey } from "./query/SortCriterion.js";
 
 /**
@@ -74,6 +74,12 @@ const GROUP_KEY_LABEL: Readonly<Record<GroupKey, string>> = {
   status: "Status",
 };
 
+const LENS_LABEL: Readonly<Record<SmartListLens, string>> = {
+  list: "List",
+  kanban: "Kanban board",
+  calendar: "Calendar",
+};
+
 const SORT_KEY_LABEL: Readonly<Record<SortKey, string>> = {
   dueDate: "Due date",
   scheduledDate: "Scheduled date",
@@ -97,6 +103,7 @@ export class SmartListEditorModal extends Modal {
   private matchMode: MatchMode;
   private rows: CriterionDraft[];
   private readonly unrepresentable: boolean;
+  private lens: SmartListLens;
   private grouping: GroupKey | null;
   private primarySort: SortCriterion | null;
   private secondarySort: SortCriterion | null;
@@ -111,6 +118,7 @@ export class SmartListEditorModal extends Modal {
     this.name = existing?.name ?? "";
     this.icon = existing?.icon ?? "flag";
     this.accentToken = existing?.accentToken ?? ACCENT_TOKEN_OPTIONS[0]!.value;
+    this.lens = existing?.lens ?? "list";
     this.grouping = existing?.grouping ?? null;
     this.primarySort = existing?.sorting[0] ?? null;
     this.secondarySort = existing?.sorting[1] ?? null;
@@ -188,13 +196,40 @@ export class SmartListEditorModal extends Modal {
 
     contentEl.createEl("h3", { text: "Display" });
 
-    new Setting(contentEl).setName("Group by").addDropdown((dropdown) => {
+    new Setting(contentEl).setName("View as").addDropdown((dropdown) => {
+      for (const lens of SMART_LIST_LENS_VALUES) dropdown.addOption(lens, LENS_LABEL[lens]);
+      dropdown.setValue(this.lens).onChange((value) => {
+        this.lens = value as SmartListLens;
+        updateGroupingVisibility();
+      });
+    });
+
+    // A kanban board's columns come from `grouping` (defaulted to "status" at save time
+    // if left unset — see `submit()`); a calendar buckets by due/scheduled date instead
+    // and never reads `grouping` at all, so the control is disabled with an inline note
+    // rather than left live-but-ignored.
+    const groupingSetting = new Setting(contentEl).setName("Group by");
+    let groupingDropdown: DropdownComponent | null = null;
+    groupingSetting.addDropdown((dropdown) => {
       dropdown.addOption("none", "None");
       for (const key of GROUP_KEY_VALUES) dropdown.addOption(key, GROUP_KEY_LABEL[key]);
       dropdown.setValue(this.grouping ?? "none").onChange((value) => {
         this.grouping = value === "none" ? null : (value as GroupKey);
       });
+      groupingDropdown = dropdown;
     });
+    const updateGroupingVisibility = (): void => {
+      const isCalendar = this.lens === "calendar";
+      groupingDropdown?.setDisabled(isCalendar);
+      groupingSetting.setDesc(
+        isCalendar
+          ? "Calendar view groups by due/scheduled date automatically — this setting is unused for it."
+          : this.lens === "kanban"
+            ? "Becomes the board's columns. Defaults to Status if left as None."
+            : "",
+      );
+    };
+    updateGroupingVisibility();
 
     this.addSortSetting(
       contentEl,
@@ -312,15 +347,22 @@ export class SmartListEditorModal extends Modal {
     if (this.primarySort !== null) sorting.push(this.primarySort);
     if (this.secondarySort !== null) sorting.push(this.secondarySort);
 
+    // A kanban board needs *some* column key; default silently to Status rather than
+    // blocking Save on a separate required-field validation, matching this modal's
+    // existing permissive style elsewhere (e.g. an empty icon falls back to "flag" just
+    // below).
+    const grouping = this.lens === "kanban" && this.grouping === null ? "status" : this.grouping;
+
     const list = createSmartList({
       id: this.existing?.id ?? `user.${makeListID()}`,
       name: trimmedName,
       icon: this.icon.trim().length > 0 ? this.icon.trim() : "flag",
       accentToken: this.accentToken,
       filter: this.unrepresentable ? this.existing!.filter : flatFilterToExpression({ mode: this.matchMode, rows: this.rows } satisfies FlatFilter),
-      grouping: this.grouping,
+      grouping,
       sorting,
       isBuiltIn: this.existing?.isBuiltIn ?? false,
+      lens: this.lens,
     });
     this.onSubmit(list);
     this.close();

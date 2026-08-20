@@ -3,7 +3,7 @@ import { PRIORITY_VALUES, type Priority } from "../model/Priority.js";
 import type { TaskStatusKind } from "../model/TaskStatus.js";
 import type { DateRangeFilter, FilterCriterion, FilterExpression, RelativeDateRange } from "./FilterCriterion.js";
 import { GROUP_KEY_VALUES, type GroupKey } from "./GroupingEngine.js";
-import type { SmartList } from "./SmartList.js";
+import { SMART_LIST_LENS_VALUES, type SmartList } from "./SmartList.js";
 import { SORT_KEY_VALUES, type SortCriterion, type SortDirection } from "./SortCriterion.js";
 
 /**
@@ -253,12 +253,19 @@ export function encodeSmartList(list: SmartList): unknown {
     grouping: list.grouping,
     sorting: list.sorting.map(encodeSortCriterion),
     isBuiltIn: list.isBuiltIn,
+    lens: list.lens,
   };
 }
 
 export function decodeSmartList(value: unknown): SmartList {
   const obj = asRecord(value, "SmartList");
   const grouping = obj.grouping === null || obj.grouping === undefined ? null : decodeGroupKey(obj.grouping);
+  // Wave 3 addition: a `smart-lists.json` written before this change has no `lens` key
+  // at all — default it to `"list"` rather than throwing, so an already-saved file keeps
+  // decoding correctly with no schema-version bump or migration step, the same
+  // backward-compatible-default trick `grouping`'s own `null`/`undefined` handling above
+  // already relies on.
+  const lens = obj.lens === undefined ? "list" : expectOneOf(obj.lens, SMART_LIST_LENS_VALUES, "SmartListLens");
   return {
     id: expectString(obj.id, "SmartList.id"),
     name: expectString(obj.name, "SmartList.name"),
@@ -268,5 +275,6 @@ export function decodeSmartList(value: unknown): SmartList {
     grouping,
     sorting: decodeArray(obj.sorting, "SmartList.sorting", decodeSortCriterion),
     isBuiltIn: expectBoolean(obj.isBuiltIn, "SmartList.isBuiltIn"),
+    lens,
   };
 }

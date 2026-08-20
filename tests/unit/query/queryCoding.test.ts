@@ -136,4 +136,44 @@ describe("queryCoding", () => {
     });
     expect(roundTripSmartList(list)).toEqual(list);
   });
+
+  test("every SmartListLens value round-trips", () => {
+    for (const lens of ["list", "kanban", "calendar"] as const) {
+      const list = createSmartList({
+        id: "user.lens-test",
+        name: "Lens test",
+        icon: "flag",
+        accentToken: "accent.blue",
+        filter: { type: "criterion", criterion: { type: "hasDescription", value: true } },
+        lens,
+      });
+      expect(roundTripSmartList(list)).toEqual(list);
+    }
+  });
+
+  test("decoding a SmartList with no lens key defaults to \"list\" — pre-Wave-3 data", () => {
+    const list = createSmartList({
+      id: "user.legacy",
+      name: "Legacy list",
+      icon: "flag",
+      accentToken: "accent.blue",
+      filter: { type: "criterion", criterion: { type: "hasDescription", value: true } },
+    });
+    const encoded = JSON.parse(JSON.stringify(encodeSmartList(list))) as Record<string, unknown>;
+    delete encoded.lens; // simulate a file written before the `lens` field existed
+    expect(decodeSmartList(encoded).lens).toBe("list");
+  });
+
+  test("an unrecognised lens value throws rather than silently falling back", () => {
+    const list = createSmartList({
+      id: "user.bad-lens",
+      name: "Bad lens",
+      icon: "flag",
+      accentToken: "accent.blue",
+      filter: { type: "criterion", criterion: { type: "hasDescription", value: true } },
+    });
+    const encoded = JSON.parse(JSON.stringify(encodeSmartList(list))) as Record<string, unknown>;
+    encoded.lens = "timeline";
+    expect(() => decodeSmartList(encoded)).toThrow(QueryCodingError);
+  });
 });

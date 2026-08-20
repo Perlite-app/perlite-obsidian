@@ -3,6 +3,18 @@ import type { GroupKey } from "./GroupingEngine.js";
 import type { SortCriterion } from "./SortCriterion.js";
 
 /**
+ * Wave 3: which renderer a smart list's own filtered/sorted tasks display through —
+ * "one query, many renderers" (the plan's own framing), so this lives as a persisted
+ * property of the list itself rather than a separate view-type concept. `"kanban"` reads
+ * `grouping` as its column key (falling back to `"status"` if unset — see
+ * `SmartListEditorModal`'s save-time default); `"calendar"` ignores `grouping` entirely
+ * and buckets by `CalendarIndex.anchorDate` instead.
+ */
+export type SmartListLens = "list" | "kanban" | "calendar";
+
+export const SMART_LIST_LENS_VALUES: readonly SmartListLens[] = ["list", "kanban", "calendar"];
+
+/**
  * A named, rule-based view that evaluates live against the vault (§6.8) — never a
  * stored set of task IDs, so a matching task added in Obsidian appears on next refresh
  * with no user action. Built-in and user-defined lists share this one type; there is no
@@ -28,15 +40,18 @@ export interface SmartList {
   /** Built-ins can be hidden but not deleted, per §6.8; this flag is what the Smart
    * Lists view checks before allowing deletion. */
   readonly isBuiltIn: boolean;
+  readonly lens: SmartListLens;
 }
 
 export function createSmartList(
-  input: Omit<SmartList, "grouping" | "sorting" | "isBuiltIn"> & Partial<Pick<SmartList, "grouping" | "sorting" | "isBuiltIn">>,
+  input: Omit<SmartList, "grouping" | "sorting" | "isBuiltIn" | "lens"> &
+    Partial<Pick<SmartList, "grouping" | "sorting" | "isBuiltIn" | "lens">>,
 ): SmartList {
   return {
     grouping: null,
     sorting: [],
     isBuiltIn: false,
+    lens: "list",
     ...input,
   };
 }
