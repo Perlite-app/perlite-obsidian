@@ -20,8 +20,11 @@ export interface ParserConfiguration {
    * until `DocumentParser` (Wave 1 chunk 4). */
   readonly frontmatterTagInheritance: boolean;
 
-  /** Vault-relative folder paths to skip entirely. Not used until `DocumentParser`
-   * (Wave 1 chunk 4). */
+  /** Vault-relative folder paths to skip entirely. Applied at the vault-scan level
+   * (`write/vaultScan.ts`, Wave 1 chunk 7) — a whole-file decision made before any file
+   * content is read, not something `DocumentParser` (which only ever sees one file's
+   * own content) could apply itself. Kept here, not in a separate settings type, since
+   * it's still vault-wide parsing behaviour in the same sense `globalFilter` is. */
   readonly excludedFolders: readonly string[];
 }
 
