@@ -5,8 +5,15 @@ task app that reads and writes the [Obsidian Tasks](https://publish.obsidian.md/
 plugin markdown format directly in your vault. This plugin brings the same
 byte-exact, conformance-tested parser to Obsidian itself — desktop and mobile.
 
-**Status: Wave 0 (bootstrap) complete, Wave 1 (core parser port) not yet started.** See
-[`Perlite-app/perlite-app`](https://github.com/Perlite-app)'s
+**Status: Wave 1 complete** — model/parser/serializer/document-parser/recurrence engine
+ported and passing the full conformance corpus; a design system (Lucide icons via
+Obsidian's own `setIcon`, accent tokens matching the native app's "Refined Stock"
+palette); the write-safety layer (`Vault.process`-based coordinated writes, sync-conflict
+detection, folder exclusions); and a working list view (Overdue/Today/Upcoming/No Date,
+tap to complete, tap to open source note) with a settings tab (global filter, folder
+exclusions). Not yet manually verified against a real running Obsidian install — see
+"Development" below. Wave 2 (user-defined smart lists, keyboard triage, quick capture)
+not yet started. See [`Perlite-app/perlite-app`](https://github.com/Perlite-app)'s
 `claude-docs/perlite-obsidian-plugin-plan.md` for the full build plan this repo follows
 (not tracked here — it's project-planning context for the native app repo, not a
 plugin-user-facing document).
@@ -34,7 +41,7 @@ npm run dev          # esbuild watch mode
 
 `conformance-skips.json` declares which fixtures this implementation doesn't support
 yet, each with a reason — see `conformance/REPORT.md`'s "declared skips" convention.
-Currently: all of them (Wave 1 hasn't started).
+Currently empty: every fixture category the corpus defines is covered.
 
 GPL-3.0 licensed — see `LICENSE`. (`conformance/`, consumed as a submodule, is a
 separate, MIT-licensed repo.)
