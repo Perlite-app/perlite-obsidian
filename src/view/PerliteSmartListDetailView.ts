@@ -134,7 +134,7 @@ export class PerliteSmartListDetailView extends ItemView {
   }
 
   private renderRow(container: HTMLElement, task: LocatedTask["task"], entry: LocatedTask): KeyboardNavRow {
-    const rowEl = renderInteractiveTaskRow(container, this.app, this.plugin, task, entry.file, () => this.refresh());
+    const rowEl = renderInteractiveTaskRow(container, this.app, this.plugin, task, entry.file, this.leaf, () => this.refresh());
     return { task, file: entry.file, rowEl };
   }
 }

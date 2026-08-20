@@ -144,6 +144,15 @@
 .perlite-task-row__context {
   font-size: var(--font-ui-smaller);
   color: var(--text-faint);
+  width: fit-content;
+}
+/* Wave 2 chunk 12: the one hoverable element that triggers Page Preview's own
+ * `hover-link` popover — the underline-on-hover matches how a real internal link
+ * reads, so the preview affordance isn't a surprise. */
+.perlite-task-row__context:hover {
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* ---- Description + inline tag chips ------------------------------------------------

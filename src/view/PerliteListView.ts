@@ -112,7 +112,7 @@ export class PerliteListView extends ItemView {
   }
 
   private renderRow(container: HTMLElement, entry: LocatedTask): KeyboardNavRow {
-    const rowEl = renderInteractiveTaskRow(container, this.app, this.plugin, entry.task, entry.file, () => this.refresh());
+    const rowEl = renderInteractiveTaskRow(container, this.app, this.plugin, entry.task, entry.file, this.leaf, () => this.refresh());
     return { task: entry.task, file: entry.file, rowEl };
   }
 }

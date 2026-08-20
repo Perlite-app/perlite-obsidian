@@ -1,4 +1,5 @@
 import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { PERLITE_HOVER_LINK_SOURCE, PERLITE_HOVER_LINK_SOURCE_ID } from "./hoverLinkSource.js";
 import { loadStoredSmartLists, saveStoredSmartLists } from "./SmartListStore.js";
 import { EMPTY_STORED_SMART_LISTS, type StoredSmartLists } from "./query/StoredSmartLists.js";
 import { PerliteSettingTab } from "./SettingsTab.js";
@@ -19,6 +20,10 @@ export default class PerlitePlugin extends Plugin {
     this.registerView(PERLITE_SMART_LISTS_VIEW_TYPE, (leaf) => new PerliteSmartListsView(leaf, this));
     this.registerView(PERLITE_SMART_LIST_DETAIL_VIEW_TYPE, (leaf) => new PerliteSmartListDetailView(leaf, this));
     this.addSettingTab(new PerliteSettingTab(this.app, this));
+    // Wave 2 chunk 12: shows Perlite under the core "Page preview" plugin's own
+    // settings, so the user controls whether hovering a task row's note reference
+    // requires the Mod key — Perlite itself never decides that.
+    this.registerHoverLinkSource(PERLITE_HOVER_LINK_SOURCE_ID, PERLITE_HOVER_LINK_SOURCE);
 
     this.addRibbonIcon("circle-check", "Open Perlite", () => {
       void this.activateListView();

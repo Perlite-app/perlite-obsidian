@@ -1,6 +1,7 @@
-import { Notice, TFile, type App } from "obsidian";
+import { Notice, TFile, type App, type HoverParent } from "obsidian";
 import { renderTaskLine } from "../design/renderTaskLine.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
+import { PERLITE_HOVER_LINK_SOURCE_ID } from "../hoverLinkSource.js";
 import * as RecurrenceEngine from "../recurrence/RecurrenceEngine.js";
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
@@ -51,13 +52,16 @@ export async function openTaskInEditor(app: App, task: ParsedTask, file: TFile):
 /** Builds and appends one interactive task row: click the status icon to complete
  * (`onAfterWrite` re-renders the caller's own view once the write settles), click
  * anywhere else on the row to open the source note. Returns the row element so the
- * caller can also register it with `ListKeyboardNav` (Wave 2 chunk 11). */
+ * caller can also register it with `ListKeyboardNav` (Wave 2 chunk 11). `hoverParent`
+ * (typically the owning view's own `leaf`, which already implements `HoverParent`) is
+ * what Wave 2 chunk 12's inline context hover attaches its popover lifecycle to. */
 export function renderInteractiveTaskRow(
   container: HTMLElement,
   app: App,
   plugin: PerlitePlugin,
   task: ParsedTask,
   file: TFile,
+  hoverParent: HoverParent,
   onAfterWrite: () => void | Promise<void>,
 ): HTMLElement {
   const row = renderTaskLine({
@@ -77,6 +81,33 @@ export function renderInteractiveTaskRow(
     if ((event.target as HTMLElement).closest(".perlite-task-row__status, .perlite-tag-chip")) return;
     void openTaskInEditor(app, task, file);
   });
+  attachHoverPreview(row, app, hoverParent, task, file);
   container.appendChild(row);
   return row;
+}
+
+/** Wave 2 chunk 12: hovering the row's own "Note › Heading" context line triggers the
+ * same `hover-link` workspace event a real internal link does — the core "Page preview"
+ * plugin (if enabled) picks it up and shows its own popover, respecting whatever
+ * modifier-key requirement the user has configured for Perlite specifically (see
+ * `hoverLinkSource.ts`). Scoped to just that one element, not the whole row — the
+ * context line is the part that actually reads as "a reference to a note," and native
+ * internal links don't turn their surrounding non-link text into a hover target either.
+ * A custom popover previewing surrounding lines (rather than the note from its top) is
+ * deliberately not built here — the plan defers it "only if necessary in practice," and
+ * nothing so far suggests it is. */
+function attachHoverPreview(row: HTMLElement, app: App, hoverParent: HoverParent, task: ParsedTask, file: TFile): void {
+  const contextEl = row.querySelector<HTMLElement>(".perlite-task-row__context");
+  if (contextEl === null) return;
+  const linktext = task.parentHeading !== null && task.parentHeading.length > 0 ? `${file.path}#${task.parentHeading}` : file.path;
+  contextEl.addEventListener("mouseover", (event) => {
+    app.workspace.trigger("hover-link", {
+      event,
+      source: PERLITE_HOVER_LINK_SOURCE_ID,
+      hoverParent,
+      targetEl: contextEl,
+      linktext,
+      sourcePath: file.path,
+    });
+  });
 }
