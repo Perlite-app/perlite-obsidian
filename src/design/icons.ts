@@ -18,7 +18,13 @@ export type PerliteIconName =
   | "calendar" // due-date chip
   | "flag" // priority chip
   | "repeat" // recurrence indicator (icon only, no text)
-  | "corner-down-right"; // parent-task breadcrumb
+  | "corner-down-right" // parent-task breadcrumb
+  // Wave 3 — kanban + calendar lenses:
+  | "grip-vertical" // kanban card / calendar agenda row drag handle
+  | "chevron-left" // calendar month nav
+  | "chevron-right" // calendar month nav
+  | "kanban" // kanban lens
+  | "calendar-days"; // calendar lens (distinct from the due-date chip's "calendar")
 
 /** Thin wrapper over Obsidian's `setIcon` — the one place this codebase calls it, so a
  * future icon-rendering change (e.g. caching) has one call site to touch. */

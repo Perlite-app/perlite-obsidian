@@ -5,6 +5,8 @@ import * as SmartListEngine from "../query/SmartListEngine.js";
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
 import { scanVaultTasks, type LocatedTask } from "../vaultTaskScan.js";
+import { renderCalendarBoard, type CalendarBoardState } from "./CalendarBoard.js";
+import { renderKanbanBoard } from "./KanbanBoard.js";
 import { ListKeyboardNav, type KeyboardNavRow } from "./ListKeyboardNav.js";
 import { renderInteractiveTaskRow } from "./taskRowInteractions.js";
 import type PerlitePlugin from "../main.js";
@@ -27,6 +29,12 @@ export class PerliteSmartListDetailView extends ItemView {
   readonly keyboardNav: ListKeyboardNav;
   private smartListId: string | null = null;
   private contentAreaEl: HTMLElement | null = null;
+  /** The calendar lens's own month/day navigation position — persisted here (not inside
+   * `CalendarBoard.ts`) so a pure nav click or a write-triggered `refresh()` doesn't
+   * reset the view back to today's month. Lazily initialised to "today" the first time a
+   * calendar-lens list is actually opened; a `list.lens !== "calendar"` refresh never
+   * touches it. */
+  private calendarState: CalendarBoardState | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: PerlitePlugin) {
     super(leaf);
@@ -108,6 +116,45 @@ export class PerliteSmartListDetailView extends ItemView {
     }
 
     const findEntry = (task: (typeof tasks)[number]): LocatedTask | undefined => byTask.get(task);
+    const listLocated: LocatedTask[] = tasks.map(findEntry).filter((entry): entry is LocatedTask => entry !== undefined);
+
+    if (list.lens === "kanban") {
+      renderKanbanBoard(container, {
+        app: this.app,
+        plugin: this.plugin,
+        list,
+        located: listLocated,
+        hoverParent: this.leaf,
+        onAfterWrite: () => this.refresh(),
+      });
+      // A 2D column/row board doesn't fit `ListKeyboardNav`'s flat row model — no
+      // keyboard nav inside the board in this first cut, mouse/touch drag + click-to-
+      // open/complete still work. See the plan's own "Known scope cuts."
+      this.keyboardNav.setRows([]);
+      return;
+    }
+
+    if (list.lens === "calendar") {
+      this.calendarState ??= (() => {
+        const today = todayCalendarDate();
+        return { visibleMonth: { ...today, day: 1 }, selectedDate: today };
+      })();
+      renderCalendarBoard(container, {
+        app: this.app,
+        plugin: this.plugin,
+        list,
+        located: listLocated,
+        hoverParent: this.leaf,
+        initialState: this.calendarState,
+        onStateChange: (next) => {
+          this.calendarState = next;
+        },
+        onRowsChanged: (rows) => this.keyboardNav.setRows([...rows]),
+        onAfterWrite: () => this.refresh(),
+      });
+      return;
+    }
+
     const navRows: KeyboardNavRow[] = [];
 
     if (list.grouping === null) {

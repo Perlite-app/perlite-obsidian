@@ -487,3 +487,203 @@
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
 }
+
+/* ---- Drag-and-drop (Wave 3, dragController.ts — shared by kanban + calendar) ---------- */
+.perlite-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: grab;
+  color: var(--text-faint);
+  touch-action: none; /* let Pointer Events drive the drag instead of native scroll/pan */
+}
+.perlite-drag-handle:hover {
+  color: var(--text-muted);
+}
+
+.perlite-drag-source--dragging {
+  opacity: 0.4;
+}
+
+.perlite-drag-ghost {
+  position: fixed;
+  z-index: var(--layer-popover);
+  pointer-events: none;
+  opacity: 0.9;
+  box-shadow: var(--shadow-l);
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary);
+}
+
+.perlite-drop-target--active {
+  outline: 2px dashed var(--interactive-accent);
+  outline-offset: -2px;
+  background-color: var(--background-modifier-hover);
+}
+
+/* ---- Kanban lens (Wave 3) --------------------------------------------------------------- */
+.perlite-kanban-board {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--perlite-spacing-md);
+  overflow-x: auto;
+  padding-bottom: var(--perlite-spacing-sm);
+}
+
+.perlite-kanban-column {
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-m);
+  padding: var(--perlite-spacing-sm);
+}
+
+.perlite-kanban-column__title {
+  margin: 0 0 var(--perlite-spacing-sm) var(--perlite-spacing-xs);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+}
+
+.perlite-kanban-column__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--perlite-spacing-xs);
+  min-height: 24px; /* keeps an empty column a real drop target, not a zero-height sliver */
+}
+
+.perlite-kanban-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--perlite-spacing-xs);
+  background-color: var(--background-primary);
+  border-radius: var(--radius-s);
+  padding: var(--perlite-spacing-xs);
+}
+
+.perlite-kanban-card .perlite-task-row {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Calendar lens (Wave 3) -------------------------------------------------------------- */
+.perlite-calendar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-sm);
+  margin-bottom: var(--perlite-spacing-sm);
+}
+
+.perlite-calendar-header__title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+}
+
+.perlite-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--perlite-spacing-xs);
+}
+.perlite-calendar-nav:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+.perlite-calendar-nav--today {
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-calendar-weekdays,
+.perlite-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.perlite-calendar-weekday {
+  text-align: center;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  padding-bottom: var(--perlite-spacing-xs);
+}
+
+.perlite-calendar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--perlite-spacing-xs) 0;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.perlite-calendar-cell:hover {
+  background-color: var(--background-modifier-hover);
+}
+.perlite-calendar-cell--outside-month {
+  color: var(--text-faint);
+}
+.perlite-calendar-cell__day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+.perlite-calendar-cell--today .perlite-calendar-cell__day {
+  background-color: rgba(var(--interactive-accent-rgb), 0.15);
+  font-weight: var(--font-semibold);
+}
+.perlite-calendar-cell--selected .perlite-calendar-cell__day {
+  outline: 1.5px solid var(--interactive-accent);
+  outline-offset: -1.5px;
+}
+.perlite-calendar-cell__dots {
+  display: flex;
+  gap: 3px;
+  height: 5px;
+}
+.perlite-calendar-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.perlite-calendar-dot--priority-highest {
+  background-color: var(--perlite-priority-highest);
+}
+.perlite-calendar-dot--priority-high {
+  background-color: var(--perlite-priority-high);
+}
+.perlite-calendar-dot--priority-medium {
+  background-color: var(--perlite-priority-medium);
+}
+.perlite-calendar-dot--priority-normal {
+  background-color: var(--text-muted);
+}
+.perlite-calendar-dot--priority-low {
+  background-color: var(--perlite-priority-low);
+}
+.perlite-calendar-dot--priority-lowest {
+  background-color: var(--perlite-priority-lowest);
+}
+
+.perlite-calendar-agenda {
+  margin-top: var(--perlite-spacing-md);
+}
+
+.perlite-calendar-agenda-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--perlite-spacing-xs);
+}
+.perlite-calendar-agenda-row .perlite-task-row {
+  flex: 1;
+  min-width: 0;
+}
