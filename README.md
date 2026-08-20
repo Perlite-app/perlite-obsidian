@@ -5,15 +5,24 @@ task app that reads and writes the [Obsidian Tasks](https://publish.obsidian.md/
 plugin markdown format directly in your vault. This plugin brings the same
 byte-exact, conformance-tested parser to Obsidian itself — desktop and mobile.
 
-**Status: Wave 1 complete** — model/parser/serializer/document-parser/recurrence engine
-ported and passing the full conformance corpus; a design system (Lucide icons via
-Obsidian's own `setIcon`, accent tokens matching the native app's "Refined Stock"
-palette); the write-safety layer (`Vault.process`-based coordinated writes, sync-conflict
-detection, folder exclusions); and a working list view (Overdue/Today/Upcoming/No Date,
-tap to complete, tap to open source note) with a settings tab (global filter, folder
-exclusions). Not yet manually verified against a real running Obsidian install — see
-"Development" below. Wave 2 (user-defined smart lists, keyboard triage, quick capture)
-not yet started. See [`Perlite-app/perlite-app`](https://github.com/Perlite-app)'s
+**Status: Waves 1 and 2 complete.** Wave 1: model/parser/serializer/document-parser/
+recurrence engine ported and passing the full conformance corpus; a design system
+(Lucide icons via Obsidian's own `setIcon`, accent tokens matching the native app's
+"Refined Stock" palette); the write-safety layer (`Vault.process`-based coordinated
+writes, sync-conflict detection, folder exclusions); a working list view (Overdue/Today/
+Upcoming/No Date, tap to complete, tap to open source note) with a settings tab (global
+filter, folder exclusions). Wave 2: the query engine (`FilterEngine`/`GroupingEngine`/
+`SortEngine`/`SmartListEngine`) and a hand-written wire format for user-defined smart
+lists, stored in the vault itself (`.perlite/smart-lists.json` — not the plugin's own
+`data.json`, so a future Android/Kotlin implementation reads the same file), with a
+create/edit/delete/hide/reorder UI; keyboard-first triage (`J`/`K`/arrows/`Enter`/`C`/
+`D`/`T`/`Shift+Space`) bound through a view-scoped `Scope`, also registered as rebindable
+commands; inline context hover via the native `hover-link` event; and a quick-capture
+command using `chrono-node` for date/time recognition (a small research spike found it
+matches or exceeds the native app's own `NSDataDetector`-based Tier 1). Not yet manually
+verified against a real running Obsidian install — see "Development" below. Wave 3
+(kanban/calendar lenses) not yet started. See
+[`Perlite-app/perlite-app`](https://github.com/Perlite-app)'s
 `claude-docs/perlite-obsidian-plugin-plan.md` for the full build plan this repo follows
 (not tracked here — it's project-planning context for the native app repo, not a
 plugin-user-facing document).
