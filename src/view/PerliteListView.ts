@@ -1,11 +1,11 @@
 import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
-import type { CalendarDate } from "../model/CalendarDate.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
 import { renderTaskLine } from "../design/renderTaskLine.js";
 import { parseDocument } from "../parser/DocumentParser.js";
 import { DEFAULT_SEGMENT_TITLE, DEFAULT_SEGMENTS, matchesDefaultSegment } from "../query/defaultSegments.js";
 import * as RecurrenceEngine from "../recurrence/RecurrenceEngine.js";
 import { parserConfiguration } from "../settings.js";
+import { todayCalendarDate } from "../support/today.js";
 import { DocumentEditError } from "../write/documentEditor.js";
 import { planVaultScan } from "../write/vaultScan.js";
 import { writeDocumentEdit } from "../write/vaultWriter.js";
@@ -15,8 +15,9 @@ import type PerlitePlugin from "../main.js";
  * Wave 1 chunk 8's list lens: a single centralized view showing vault tasks segmented
  * like the native app's default view (Overdue/Today/Upcoming/No Date, §6.5) — the first
  * option the plan text itself names, picked over grouping by the 6 built-in smart lists
- * since the query engine those lists need (`FilterEngine`/`SmartListEngine`) isn't
- * ported until Wave 2 chunk 10; `query/defaultSegments.ts` needed no such engine.
+ * since the query engine those lists need (`FilterEngine`/`SmartListEngine`) wasn't
+ * ported until Wave 2 chunk 10 (now done — see `view/PerliteSmartListsView.ts` for that
+ * hub); `query/defaultSegments.ts` needed no such engine and still doesn't use it.
  *
  * Click a `.todo` status icon to complete (regenerating recurrence via the ported
  * `RecurrenceEngine.complete`); click anywhere else on a row to open its source note at
@@ -24,11 +25,6 @@ import type PerlitePlugin from "../main.js";
  * inline editing yet — those are later waves/chunks per the plan, not gaps in this one.
  */
 export const PERLITE_LIST_VIEW_TYPE = "perlite-list-view";
-
-function todayCalendarDate(): CalendarDate {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
-}
 
 interface LocatedTask {
   readonly task: ParsedTask;
