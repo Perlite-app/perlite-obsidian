@@ -1,0 +1,25 @@
+{
+  "name": "perlite-obsidian",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Perlite for Obsidian — reads/writes the Obsidian Tasks plugin markdown format with a byte-exact, conformance-tested parser shared with the native Perlite apps.",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs watch",
+    "build": "node esbuild.config.mjs production",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Perlite-app/perlite-obsidian.git"
+  },
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "obsidian": "^1.13.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

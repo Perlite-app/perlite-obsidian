@@ -1,0 +1,3 @@
+[submodule "conformance"]
+	path = conformance
+	url = https://github.com/Perlite-app/perlite-conformance.git

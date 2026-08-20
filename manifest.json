@@ -1,0 +1,10 @@
+{
+  "id": "perlite",
+  "name": "Perlite",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Reads and writes the Obsidian Tasks plugin markdown format with a byte-exact, conformance-tested parser shared with the native Perlite apps.",
+  "author": "David Sere",
+  "authorUrl": "https://github.com/Perlite-app",
+  "isDesktopOnly": false
+}

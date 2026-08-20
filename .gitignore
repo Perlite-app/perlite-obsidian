@@ -1,0 +1,10 @@
+node_modules/
+main.js
+main.js.map
+*.tsbuildinfo
+
+# Obsidian plugin dev loop — a scratch vault symlinking this repo's build output into
+# .obsidian/plugins/perlite/, gitignored per the plugin plan's own Wave 0 instructions.
+dev-vault/
+
+.DS_Store
