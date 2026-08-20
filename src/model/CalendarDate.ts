@@ -26,7 +26,10 @@ function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
-function daysInMonth(month: number, year: number): number {
+/** Exported for `RecurrenceCalculator`'s month/year-addition clamping (Jan 31 + 1 month
+ * = Feb 28, not an overflow into March) — shares this one leap-year-aware
+ * implementation rather than duplicating it. */
+export function daysInMonth(month: number, year: number): number {
   switch (month) {
     case 1:
     case 3:

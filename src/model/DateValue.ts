@@ -15,8 +15,13 @@ import {
  */
 export type DateValue = { readonly kind: "valid"; readonly date: CalendarDate } | { readonly kind: "invalid"; readonly raw: string };
 
-export function dateValueCalendarDate(value: DateValue): CalendarDate | null {
-  return value.kind === "valid" ? value.date : null;
+/** Accepts `null` directly (a `ParsedTask` field that's absent entirely, e.g. no `📅` at
+ * all) alongside a real `DateValue`, mirroring how Swift's `task.due?.calendarDate`
+ * optional-chains through both "field absent" and "field present but invalid" in one
+ * expression — TS has no equivalent chaining through a plain function call, so the
+ * function itself accepts the wider type instead. */
+export function dateValueCalendarDate(value: DateValue | null): CalendarDate | null {
+  return value !== null && value.kind === "valid" ? value.date : null;
 }
 
 /** The exact text that appeared after the emoji marker, for either case. */
