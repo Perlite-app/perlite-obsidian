@@ -266,3 +266,48 @@
 .perlite-status-custom {
   --perlite-status-icon-color: var(--perlite-status-custom);
 }
+
+/* ---- List lens (Wave 1 chunk 8) -------------------------------------------------------
+ * The single centralized view rendering the four default segments (Overdue/Today/
+ * Upcoming/No Date), each as one `.perlite-segment`. */
+.perlite-list-view {
+  padding: var(--perlite-spacing-md);
+  overflow-y: auto;
+}
+
+.perlite-segment + .perlite-segment {
+  margin-top: var(--perlite-spacing-lg);
+}
+
+.perlite-segment__title {
+  margin: 0 0 var(--perlite-spacing-xs) 0;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.perlite-segment__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.perlite-list-view__row {
+  cursor: pointer;
+}
+
+.perlite-conflict-banner {
+  margin-bottom: var(--perlite-spacing-md);
+  padding: var(--perlite-spacing-sm) var(--perlite-spacing-md);
+  border-radius: var(--radius-s);
+  background-color: var(--background-modifier-error);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-empty-state {
+  padding: var(--perlite-spacing-xl) 0;
+  text-align: center;
+  color: var(--text-muted);
+}
