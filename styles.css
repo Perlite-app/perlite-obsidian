@@ -1,4 +1,268 @@
-/* Perlite for Obsidian — design tokens land here in Wave 1 chunk 6 (accent tokens as
-   CSS custom properties seeded from the native app's "Refined Stock" palette, spacing
-   scale mirroring Spacing.swift). Intentionally empty until that chunk — see
-   claude-docs/perlite-obsidian-plugin-plan.md (native app repo), "Design system". */
+/* Perlite for Obsidian — design system.
+ *
+ * Every rule here follows the native app's own §5 discipline, carried over deliberately:
+ * accent hues and icons stay constant across native app and plugin (same token *names*,
+ * same hex values — a value copy of `Perlite/DesignSystem/AccentToken.swift`'s "Refined
+ * Stock" palette, not a redesign); chrome (backgrounds, body text, borders) does NOT —
+ * it inherits the user's chosen Obsidian theme via Obsidian's own CSS custom properties,
+ * per §5's own explicit exception ("a plugin that imports the native app's fixed palette
+ * wholesale fights the user's chosen theme and reads as broken").
+ *
+ * Every class is prefixed `perlite-` (standard Obsidian plugin CSS discipline, avoids
+ * collisions with the user's theme/snippets/other plugins).
+ */
+
+/* ---- Accent tokens ------------------------------------------------------------------
+ * Light values live at `.theme-light`, dark at `.theme-dark` — Obsidian's own documented
+ * theming convention (see docs.obsidian.md/Reference/CSS+variables/About+styling), the
+ * same selectors a theme itself would override these at. `priority.normal` and
+ * `status.todo` intentionally have NO fixed hex — they resolve to `--text-normal`
+ * (Obsidian's own foreground colour), mirroring the native app's `.primary`; the same
+ * story for `status.cancelled` → `--text-muted`, mirroring `.secondary`. Neither is
+ * declared as a custom property below for that reason — call sites read Obsidian's own
+ * variable directly for those two cases, same as the Swift original does. */
+.theme-light {
+  --perlite-priority-highest: #e5484d;
+  --perlite-priority-high: #f2762c;
+  --perlite-priority-medium: #e6a817;
+  --perlite-priority-low: #3b82f6;
+  --perlite-priority-lowest: #8e8e93;
+
+  --perlite-status-done: #34a853;
+  --perlite-status-custom: #8b5cf6;
+
+  --perlite-warning: #f2762c;
+  --perlite-recurrence-highlight: #34a853;
+  --perlite-tag: #4c6ef5;
+  --perlite-tag-rgb: 76, 110, 245;
+}
+
+.theme-dark {
+  --perlite-priority-highest: #ff6a65;
+  --perlite-priority-high: #ff9d5c;
+  --perlite-priority-medium: #f5c451;
+  --perlite-priority-low: #6fa8ff;
+  --perlite-priority-lowest: #a6a6ac;
+
+  --perlite-status-done: #58c976;
+  --perlite-status-custom: #ac8cff;
+
+  --perlite-warning: #ff9d5c;
+  --perlite-recurrence-highlight: #58c976;
+  --perlite-tag: #7c93ff;
+  --perlite-tag-rgb: 124, 147, 255;
+}
+
+/* ---- Spacing -------------------------------------------------------------------------
+ * Mirrors `Spacing.swift`'s 4/8/12/16/24px scale exactly — which, conveniently, is
+ * *identical* to Obsidian's own 4px-grid `--size-4-*` scale, so these are semantic
+ * aliases onto Obsidian's real tokens rather than a second, parallel scale that could
+ * drift from the user's actual theme (a theme overriding `--size-4-*` is honoured here
+ * automatically). */
+:root {
+  --perlite-spacing-xs: var(--size-4-1); /* 4px */
+  --perlite-spacing-sm: var(--size-4-2); /* 8px */
+  --perlite-spacing-md: var(--size-4-3); /* 12px */
+  --perlite-spacing-lg: var(--size-4-4); /* 16px */
+  --perlite-spacing-xl: var(--size-4-6); /* 24px */
+}
+
+/* ---- Task row -------------------------------------------------------------------------
+ * One task: status icon, description (with inline tag chips), source context, and a
+ * wrapping row of field chips (due/priority/recurrence/subtasks) — the single row shape
+ * every view (list now, kanban/calendar later) renders through, never its own markup.
+ * Mirrors `TaskRow.swift`'s layout (an `HStack` of status + a `VStack` of everything
+ * else) directly onto flexbox. */
+.perlite-task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--perlite-spacing-sm);
+  padding: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
+  border-radius: var(--radius-s);
+  transition: background-color 100ms ease-out;
+}
+
+.perlite-task-row:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-task-row__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--perlite-status-icon-color, var(--text-normal));
+  cursor: pointer;
+}
+
+.perlite-task-row__status:hover {
+  color: var(--interactive-accent);
+}
+
+.perlite-task-row__status:not(.perlite-task-row__status--interactive) {
+  cursor: default;
+}
+
+.perlite-task-row__status:not(.perlite-task-row__status--interactive):hover {
+  color: var(--perlite-status-icon-color, var(--text-normal));
+}
+
+.perlite-task-row__status svg {
+  width: 100%;
+  height: 100%;
+}
+
+.perlite-task-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.perlite-task-row__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+.perlite-task-row__breadcrumb svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.perlite-task-row__context {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+/* ---- Description + inline tag chips ------------------------------------------------
+ * `renderTaskLine.ts` tokenises the description into words and recognised #tag tokens
+ * (mirroring `TaggedText.swift`'s own regex-then-membership-check approach) and lays
+ * them out with wrapping flex — the DOM equivalent of `TaggedText`'s custom
+ * `FlowLayout`, needed for the same reason: a chip needs a real rounded background a
+ * plain inline text run can't give a substring. */
+.perlite-task-description {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.3em;
+  color: var(--text-normal);
+  line-height: 1.35;
+}
+
+.perlite-task-description--done {
+  color: var(--text-muted);
+}
+
+.perlite-task-description__word {
+  text-decoration: none;
+}
+
+.perlite-task-description--done .perlite-task-description__word {
+  text-decoration: line-through;
+  text-decoration-color: var(--text-faint);
+}
+
+.perlite-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: rgba(var(--perlite-tag-rgb), 0.15);
+  color: var(--perlite-tag);
+  font-size: var(--font-ui-small);
+  text-decoration: none;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background-color 100ms ease-out,
+    filter 100ms ease-out;
+}
+
+.perlite-tag-chip:hover {
+  background-color: rgba(var(--perlite-tag-rgb), 0.25);
+}
+
+.perlite-task-description--done .perlite-tag-chip {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* ---- Field chip row -------------------------------------------------------------------
+ * Wrapping flex row of due/priority/recurrence/subtask-progress chips — the DOM
+ * equivalent of `TaskRow.swift`'s own `FlowLayout`-based chip row, same reasoning: a
+ * plain non-wrapping row would compress a chip's own text instead of wrapping the whole
+ * chip to a new line under horizontal pressure. */
+.perlite-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.perlite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.perlite-chip svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.perlite-chip--icon-only svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Colour modifiers — same token names as the native app, applied as classes so a user's
+ * own CSS snippet can target/override them without touching plugin internals. */
+.perlite-chip--priority-highest {
+  color: var(--perlite-priority-highest);
+}
+.perlite-chip--priority-high {
+  color: var(--perlite-priority-high);
+}
+.perlite-chip--priority-medium {
+  color: var(--perlite-priority-medium);
+}
+.perlite-chip--priority-low {
+  color: var(--perlite-priority-low);
+}
+.perlite-chip--priority-lowest {
+  color: var(--perlite-priority-lowest);
+}
+.perlite-chip--due-flash {
+  color: var(--perlite-recurrence-highlight);
+  transition: color 400ms ease-out;
+}
+
+/* ---- Status icon colour, applied via class per task-status kind ---------------------- */
+.perlite-status-todo {
+  --perlite-status-icon-color: var(--text-normal);
+}
+.perlite-status-done {
+  --perlite-status-icon-color: var(--perlite-status-done);
+}
+.perlite-status-cancelled {
+  --perlite-status-icon-color: var(--text-muted);
+}
+.perlite-status-custom {
+  --perlite-status-icon-color: var(--perlite-status-custom);
+}
