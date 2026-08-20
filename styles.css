@@ -474,3 +474,16 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ---- Quick capture (Wave 2 chunk 13) --------------------------------------------------- */
+.perlite-quickadd-input {
+  width: 100%;
+  resize: vertical;
+}
+
+.perlite-quickadd-preview {
+  min-height: 1.4em;
+  margin: var(--perlite-spacing-xs) 0 var(--perlite-spacing-sm) 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}

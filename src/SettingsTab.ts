@@ -59,5 +59,19 @@ export class PerliteSettingTab extends PluginSettingTab {
             await this.plugin.updateSettings({ excludedFolders: folders });
           });
       });
+
+    new Setting(containerEl)
+      .setName("Default inbox file")
+      .setDesc("Where the quick-capture command (Wave 2 chunk 13) appends new tasks. Created if it doesn't exist.")
+      .addText((text) =>
+        text
+          .setPlaceholder("Inbox.md")
+          .setValue(this.plugin.settings.defaultInboxFile)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            if (trimmed.length === 0) return;
+            await this.plugin.updateSettings({ defaultInboxFile: trimmed });
+          }),
+      );
   }
 }

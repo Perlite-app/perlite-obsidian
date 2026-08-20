@@ -24,12 +24,16 @@ export interface PerliteSettings {
   /** Vault-relative folder paths to skip entirely when scanning — see
    * `write/vaultScan.ts`. */
   readonly excludedFolders: readonly string[];
+  /** Vault-relative path Wave 2 chunk 13's quick-capture command appends to — created
+   * (with any missing parent folder) on first capture if it doesn't exist yet. */
+  readonly defaultInboxFile: string;
 }
 
 export const DEFAULT_SETTINGS: PerliteSettings = {
   globalFilterEnabled: true,
   globalFilterTag: DEFAULT_PARSER_CONFIGURATION.globalFilter ?? "#task",
   excludedFolders: [],
+  defaultInboxFile: "Inbox.md",
 };
 
 /** Builds the `ParserConfiguration` every parse call in this plugin uses, from the

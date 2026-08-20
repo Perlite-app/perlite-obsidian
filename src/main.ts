@@ -1,5 +1,6 @@
 import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
 import { PERLITE_HOVER_LINK_SOURCE, PERLITE_HOVER_LINK_SOURCE_ID } from "./hoverLinkSource.js";
+import { QuickCaptureModal } from "./QuickCaptureModal.js";
 import { loadStoredSmartLists, saveStoredSmartLists } from "./SmartListStore.js";
 import { EMPTY_STORED_SMART_LISTS, type StoredSmartLists } from "./query/StoredSmartLists.js";
 import { PerliteSettingTab } from "./SettingsTab.js";
@@ -43,6 +44,14 @@ export default class PerlitePlugin extends Plugin {
       },
     });
     this.registerListNavCommands();
+
+    this.addCommand({
+      id: "quick-capture",
+      name: "Quick capture",
+      callback: () => {
+        new QuickCaptureModal(this.app, this).open();
+      },
+    });
   }
 
   /** Wave 2 chunk 11: every `ListKeyboardNav` action is *also* registered here via
@@ -134,7 +143,9 @@ export default class PerlitePlugin extends Plugin {
     return true;
   }
 
-  private async refreshAllViews(): Promise<void> {
+  /** Public: also called after a quick-capture write (`QuickCaptureModal`), not only
+   * from this file's own settings/smart-list mutation paths. */
+  async refreshAllViews(): Promise<void> {
     const viewTypes = [PERLITE_LIST_VIEW_TYPE, PERLITE_SMART_LISTS_VIEW_TYPE, PERLITE_SMART_LIST_DETAIL_VIEW_TYPE];
     for (const viewType of viewTypes) {
       for (const leaf of this.app.workspace.getLeavesOfType(viewType)) {
