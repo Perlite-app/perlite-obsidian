@@ -138,8 +138,20 @@ export const STATUS_ICON: Readonly<Record<TaskStatusKind, PerliteIconName>> = {
   custom: "circle-question-mark",
 };
 
-/** Only `todo`/`done` have a defined "tap to toggle" meaning — mirrors
- * `TaskRow.statusControl`'s own switch exactly. */
+/** Only `todo` is clickable here. The native `TaskRow.statusControl` also makes `done`
+ * interactive (tap to uncomplete), but that requires an `uncomplete()` primitive — clear
+ * the `done` date and, for a recurring task, find and remove the already-generated next
+ * instance — which hasn't been ported to this plugin yet (see `KanbanBoard.ts`'s own
+ * "Reopening a done task isn't supported yet" notice, the same limitation stated there).
+ * Marking `done` interactive without that primitive behind it is actively harmful, not
+ * just an inert affordance: the only thing wired to `onStatusClick` is
+ * `completeTaskAndWrite`, which re-runs `RecurrenceEngine.complete` on an
+ * already-completed task — silently stomping its `done` date to today for a plain task,
+ * and inserting a duplicate next-instance line on every click for a recurring one (this
+ * plugin's `buildNextInstance` already guards against a *corrupted* duplicate — it always
+ * clears `.done` on the new line — but nothing stops the duplicate insertion itself).
+ * Revisit once `uncomplete()` is ported; until then this must stay `todo`-only, not a
+ * mirror of the native switch. */
 export function isStatusInteractive(kind: TaskStatusKind): boolean {
-  return kind === "todo" || kind === "done";
+  return kind === "todo";
 }

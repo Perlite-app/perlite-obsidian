@@ -27,8 +27,9 @@ export interface RenderTaskLineOptions {
   /** This task's parent's description, or omitted for a top-level task — computed by
    * the caller, same reasoning as `subtaskProgress`. */
   readonly parentDescription?: string;
-  /** Fired when the status icon is clicked on a `todo`/`done` task — never fires for
-   * `cancelled`/`custom`, which render as non-interactive glyphs. */
+  /** Fired when the status icon is clicked on a `todo` task — never fires for
+   * `done`/`cancelled`/`custom`, which all render as non-interactive glyphs (see
+   * `isStatusInteractive`'s own doc comment for why `done` isn't clickable here yet). */
   readonly onStatusClick?: (task: ParsedTask) => void;
   /** Fired when an inline `#tag` chip is clicked, with the tag's raw text (including
    * its leading `#`). */
@@ -42,7 +43,7 @@ function renderStatusIcon(options: RenderTaskLineOptions): HTMLElement {
   el.addClass("perlite-task-row__status", `perlite-status-${kind}`);
   if (interactive) {
     el.addClass("perlite-task-row__status--interactive");
-    el.setAttribute("aria-label", kind === "todo" ? "Mark task done" : "Mark task not done");
+    el.setAttribute("aria-label", "Mark task done");
     el.addEventListener("click", () => options.onStatusClick?.(options.task));
   }
   renderIcon(el, STATUS_ICON[kind]);
