@@ -42,11 +42,19 @@ export class AddTagModal extends Modal {
 
   private submit(): void {
     const trimmed = this.value.trim();
-    if (trimmed.length <= 1) {
+    if (trimmed.length === 0 || trimmed === "#") {
       this.close();
       return;
     }
-    this.onSubmit(trimmed);
+    // The field is pre-seeded with "#", but a user who selects-all and retypes (a
+    // natural way to replace the placeholder) loses it — `createTaskTag` throws on a
+    // missing leading "#" rather than tolerating it (see its own doc comment), and that
+    // throw happens inside `onSubmit`'s fire-and-forget async callback, after this modal
+    // has already closed, so it would otherwise surface as nothing more than a silent
+    // unhandled rejection with no tag added. Auto-prefix instead, same as the native
+    // app's own tag-add field does for the identical precondition.
+    const tag = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+    this.onSubmit(tag);
     this.close();
   }
 }
