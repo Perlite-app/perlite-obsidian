@@ -111,10 +111,14 @@ export default class PerlitePlugin extends Plugin {
   }
 
   /** Loads the vault-stored smart-list definitions (`SmartListStore.ts`) into memory.
-   * A `corrupt` result surfaces a persistent `Notice` (not a transient one — this is
-   * exactly the "never silently discarded" case that store's own doc comment exists
-   * for) naming where the unreadable original was preserved; either way, falls back to
-   * an empty store so the built-ins alone still work. */
+   * A `corrupt` or `readError` result surfaces a persistent `Notice` (not a transient
+   * one — this is exactly the "never silently discarded" case that store's own doc
+   * comment exists for); either way, falls back to an empty in-memory store so the
+   * built-ins alone still work. **Critically, `readError` must warn too, not just
+   * `corrupt`**: the file exists and is untouched on disk, but starting from an empty
+   * in-memory store means the very next smart-list create/edit (`mutateSmartLists`
+   * always persists from whatever's in-memory) would silently overwrite it — the user
+   * needs the chance to reload/retry before that happens, not silent data loss. */
   private async loadSmartLists(): Promise<void> {
     const result = await loadStoredSmartLists(this.app);
     if (result.kind === "loaded") {
@@ -123,6 +127,12 @@ export default class PerlitePlugin extends Plugin {
       this.smartLists = EMPTY_STORED_SMART_LISTS;
       if (result.kind === "corrupt") {
         new Notice(`Perlite couldn't read your saved smart lists — the old file was kept at "${result.preservedAt}".`, 0);
+      } else if (result.kind === "readError") {
+        new Notice(
+          "Perlite couldn't read your saved smart lists (a temporary error) — the file itself wasn't touched. " +
+            "Reload the plugin or restart Obsidian before creating or editing a smart list, or you risk overwriting it with an empty one.",
+          0,
+        );
       }
     }
   }
