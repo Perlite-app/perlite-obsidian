@@ -145,47 +145,47 @@ plugin exception often shows there with nothing visible in the UI.
       weekday resolves to *today* here (unlike the native app, which resolves to next
       week) — that's expected, not a bug.
 
-### Wave 3 — kanban and calendar lenses
+### Design pass — main tab, lenses and Task sidebars, board, calendar, Quick add
 
-- [ ] Edit a smart list (or create one) and switch its **lens** to **Kanban** — confirm
-      it renders as columns instead of a flat list.
-- [ ] Confirm each card has a **dedicated drag handle** (not the whole card) — try
-      selecting text in a card's title without triggering a drag.
-- [ ] Drag a card between columns (grouped by whichever property you picked — status/
-      priority/tag/folder) and confirm the underlying file's field actually changed on
-      disk to match the new column.
-- [ ] Switch the same list's lens to **Calendar** — confirm a month grid renders with
-      dots/markers on days that have tasks.
-- [ ] Navigate months via the chevron buttons.
-- [ ] Drag a task onto a different day and confirm its `📅` field was rewritten in place
-      in the source file — and that no other field on that line changed.
-- [ ] Switch the lens back to **List** and confirm the same smart list renders as an
-      ordinary flat list again with no leftover kanban/calendar state.
+The October 2026 design pass replaced the old list/kanban/calendar views with one main
+tab (List / Board / Calendar) plus two sidebar views. Run each item in a light **and** a
+dark theme (and a third-party theme like **Minimal** if you have one) — every colour
+should come from the theme; nothing should look hard-coded.
 
-### Visual polish pass
-
-The design pass that added sticky view headers, section-header icons/count pills, tinted
-smart-list icon tiles, and real-`<button>` calendar cells was never run inside Obsidian
-either (same CI-can't-run-Obsidian gap as everything else in this file) — go through
-every view once with this in mind, not just once overall:
-
-- [ ] In **Settings → Appearance**, switch between a light and a dark theme (and, if
-      installed, a popular third-party theme like **Minimal**) and revisit the list view,
-      smart lists hub, a kanban-lens list, and a calendar-lens list in each — confirm no
-      Perlite surface looks like it hardcoded a background/text color the theme should
-      own (the only fixed hues should be priority/status/accent colors, never chrome).
-- [ ] Tab through each view with the keyboard only (no mouse) — confirm every button,
-      chip, and calendar day cell shows a visible focus ring, and that the sticky view
-      header's icon buttons are reachable.
-- [ ] Shrink the Perlite pane to a narrow sidebar width — confirm a long task description
-      still wraps cleanly and the sticky header/section-header count pills don't overflow
-      or clip.
-- [ ] Smart lists hub: confirm each list's icon tile is tinted with that list's own
-      configured color (not all the same gray), and that a hidden built-in reads as
-      muted without dimming its count/menu button.
-- [ ] Quick capture: type a phrase with a date/priority/tag and confirm the live preview
-      below the textbox renders as a real task row (icon, chips) rather than a plain
-      text line — clear the field and confirm the preview area collapses away.
+- [ ] The ribbon icon opens the **Perlite** tab and adds **Perlite lenses** (left
+      sidebar) and **Task** (right sidebar). The tab title is the lens name.
+- [ ] Lenses sidebar: Today / Upcoming / No date / High priority / All tasks, then smart
+      lists, tags and notes, each with an open count. Picking one switches the tab; the
+      choice is still selected after reloading Obsidian.
+- [ ] List: the ring and "x of y done" match; **Group by** Note / Due / Priority works.
+      The Up next card's **Done** completes it in the file; **Details** shows it in the
+      Task sidebar.
+- [ ] List capture field: type `Order toner tomorrow !! every week #work` — each phrase
+      is tinted *exactly* under the text as you type (also when it wraps to a second
+      line), and the line under it is what lands in the file. Enter adds it; on the
+      Today lens the task is due today; on a note lens it goes into that note. Keep
+      typing the next task immediately — focus must stay in the field.
+- [ ] Rows: click selects (Task sidebar follows), double-click opens the note at the
+      line, the ring completes. J/K/C/D/T/Enter still work, and the Task sidebar
+      follows J/K.
+- [ ] Task sidebar: status To do / Doing / Done / Cancel write `[ ]` / `[/]` / `[x]` /
+      `[-]`; Due / Scheduled / Starts open the date palette (try typing "next friday");
+      Tags adds a tag; priority control writes the marker; "Open … at line N" works.
+- [ ] Board: columns by Status / Priority / Note; drag a card to another status or
+      priority column and check the line on disk; the toast's **Undo** puts it back.
+      Each card's ⋯ menu offers the same moves (this is the mobile path). Clicking a
+      card title opens the note *beside* the board, reusing one split. Cancelled starts
+      folded; Note columns don't accept drops.
+- [ ] Calendar: Week / Month; Place by 📅 / ⏳ / 🛫; drag a task to another day and
+      check only that field changed; drag it to the **No … date** tray to remove the
+      field; Undo. The lenses sidebar shows a mini month in Calendar mode — picking a
+      day moves the week.
+- [ ] Quick add (**Perlite: New task**, no default hotkey): tinted field, `#` opens the
+      tag popover (Tab or Enter accepts), chips remove their phrase, **Save to** picks a
+      note, Enter adds and stays open, Cmd/Ctrl+Enter adds and closes.
+- [ ] Status bar shows "Perlite: N left today"; clicking it opens Today.
+- [ ] Keyboard only: every control in the tab and both sidebars shows a focus ring.
+- [ ] Narrow pane: the header, toolbars and calendar wrap instead of clipping.
 
 ### Mobile (isDesktopOnly is false — this matters)
 

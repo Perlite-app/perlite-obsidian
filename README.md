@@ -5,7 +5,7 @@ task app that reads and writes the [Obsidian Tasks](https://publish.obsidian.md/
 plugin markdown format directly in your vault. This plugin brings the same
 byte-exact, conformance-tested parser to Obsidian itself — desktop and mobile.
 
-**Status: Waves 1, 2, and 3 complete.** Wave 1: model/parser/serializer/document-parser/
+**Status: Waves 1–3 complete, plus the design pass.** Wave 1: model/parser/serializer/document-parser/
 recurrence engine ported and passing the full conformance corpus; a design system
 (Lucide icons via Obsidian's own `setIcon`, accent tokens matching the native app's
 "Refined Stock" palette); the write-safety layer (`Vault.process`-based coordinated
@@ -19,11 +19,13 @@ create/edit/delete/hide/reorder UI; keyboard-first triage (`J`/`K`/arrows/`Enter
 `D`/`T`/`Shift+Space`) bound through a view-scoped `Scope`, also registered as rebindable
 commands; inline context hover via the native `hover-link` event; and a quick-capture
 command using `chrono-node` for date/time recognition (a small research spike found it
-matches or exceeds the native app's own `NSDataDetector`-based Tier 1). Wave 3: a
-kanban lens (columns grouped by any property, drag-to-recategorize via a dedicated
-drag handle, not the whole card) and a calendar lens (month grid, drag-to-reschedule
-rewriting the `📅` field in place), both selectable per smart list via a new `lens`
-field — "one query, many renderers." **Not yet manually verified against a real running
+matches or exceeds the native app's own `NSDataDetector`-based Tier 1). Wave 3: board and calendar
+layouts. **Design pass (2026-10):** one main tab with List / Board / Calendar layouts
+over a chosen lens (Today, Upcoming, a smart list, a tag, a note), a "Perlite lenses"
+left-sidebar view, a "Task" right-sidebar view that follows the selection, a status bar
+count, and a Quick add modal with in-place highlighting of recognised dates, priority,
+`every …` repeats and `#tags` — colours taken only from the active Obsidian theme.
+**Not yet manually verified against a real running
 Obsidian install** — see [`TESTING.md`](TESTING.md) for how to do that pass. See
 [`Perlite-app/perlite-app`](https://github.com/Perlite-app)'s
 `claude-docs/perlite-obsidian-plugin-plan.md` for the full build plan this repo follows

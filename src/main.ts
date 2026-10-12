@@ -5,16 +5,22 @@ import { QuickCaptureModal } from "./QuickCaptureModal.js";
 import { loadStoredSmartLists, saveStoredSmartLists } from "./SmartListStore.js";
 import { EMPTY_STORED_SMART_LISTS, type StoredSmartLists } from "./query/StoredSmartLists.js";
 import { PerliteSettingTab } from "./SettingsTab.js";
-import { DEFAULT_SETTINGS, type PerliteSettings } from "./settings.js";
+import { DEFAULT_SETTINGS, DEFAULT_VIEW_SETTINGS, type PerliteSettings } from "./settings.js";
 import { createDebouncer, type Debouncer } from "./write/debounce.js";
-import { PERLITE_LIST_VIEW_TYPE, PerliteListView } from "./view/PerliteListView.js";
-import { PERLITE_SMART_LIST_DETAIL_VIEW_TYPE, PerliteSmartListDetailView } from "./view/PerliteSmartListDetailView.js";
+import { lensCaptureDefaults, type Lens } from "./query/lenses.js";
+import type { PerliteMode } from "./settings.js";
+import { PERLITE_LENSES_VIEW_TYPE, PerliteLensesView } from "./view/PerliteLensesView.js";
+import { PERLITE_LIST_VIEW_TYPE, PerliteListView, todayCounts } from "./view/PerliteListView.js";
 import { PERLITE_SMART_LISTS_VIEW_TYPE, PerliteSmartListsView } from "./view/PerliteSmartListsView.js";
-import { PERLITE_TAG_DETAIL_VIEW_TYPE, PerliteTagDetailView } from "./view/PerliteTagDetailView.js";
+import { PerliteState } from "./view/PerliteState.js";
+import { PERLITE_TASK_VIEW_TYPE, PerliteTaskView } from "./view/PerliteTaskView.js";
 
 export default class PerlitePlugin extends Plugin {
   settings: PerliteSettings = DEFAULT_SETTINGS;
   smartLists: StoredSmartLists = EMPTY_STORED_SMART_LISTS;
+  /** The design pass's shared UI state and vault scan — see `view/PerliteState.ts`. */
+  state!: PerliteState;
+  private statusBarEl: HTMLElement | null = null;
   /** The one leaf every Perlite navigation repoints when `singleTabNavigation` is on —
    * see `openPerliteView`'s own doc comment for why this exists at all. `null` until the
    * first navigation; re-discovered (via `getLeaf(false)`) whenever the previously
@@ -32,11 +38,28 @@ export default class PerlitePlugin extends Plugin {
     registerPerliteIcon();
     await this.loadSettings();
     await this.loadSmartLists();
+    this.state = new PerliteState(
+      this.app,
+      () => this.settings,
+      () => this.smartLists,
+      (view) => {
+        this.settings = { ...this.settings, view };
+        void this.saveSettings();
+      },
+    );
 
     this.registerView(PERLITE_LIST_VIEW_TYPE, (leaf) => new PerliteListView(leaf, this));
+    this.registerView(PERLITE_LENSES_VIEW_TYPE, (leaf) => new PerliteLensesView(leaf, this));
+    this.registerView(PERLITE_TASK_VIEW_TYPE, (leaf) => new PerliteTaskView(leaf, this));
     this.registerView(PERLITE_SMART_LISTS_VIEW_TYPE, (leaf) => new PerliteSmartListsView(leaf, this));
-    this.registerView(PERLITE_SMART_LIST_DETAIL_VIEW_TYPE, (leaf) => new PerliteSmartListDetailView(leaf, this));
-    this.registerView(PERLITE_TAG_DETAIL_VIEW_TYPE, (leaf) => new PerliteTagDetailView(leaf, this));
+
+    // Desktop-only status bar item (Obsidian has no status bar on mobile): what's left
+    // today; click to open Today.
+    this.statusBarEl = this.addStatusBarItem();
+    this.statusBarEl.addClass("perlite-status-bar", "mod-clickable");
+    this.statusBarEl.addEventListener("click", () => void this.openLens({ kind: "today" }));
+    this.registerEvent(this.state.on("data", () => this.updateStatusBar()));
+    this.app.workspace.onLayoutReady(() => void this.state.rescan());
     this.addSettingTab(new PerliteSettingTab(this.app, this));
     // Wave 2 chunk 12: shows Perlite under the core "Page preview" plugin's own
     // settings, so the user controls whether hovering a task row's note reference
@@ -69,13 +92,22 @@ export default class PerlitePlugin extends Plugin {
     });
     this.registerListNavCommands();
 
+    // Id kept from the old "Quick capture" command so an existing hotkey still works;
+    // no default hotkey, per the community plugin guidelines.
     this.addCommand({
       id: "quick-capture",
-      name: "Quick capture",
-      callback: () => {
-        new QuickCaptureModal(this.app, this).open();
-      },
+      name: "New task",
+      callback: () => this.openQuickAdd(),
     });
+    this.addCommand({ id: "show-lenses", name: "Show lenses sidebar", callback: () => void this.revealLensesSidebar() });
+    this.addCommand({ id: "show-task", name: "Show task sidebar", callback: () => void this.revealTaskSidebar() });
+    for (const [mode, label] of [
+      ["list", "List"],
+      ["board", "Board"],
+      ["calendar", "Calendar"],
+    ] as const) {
+      this.addCommand({ id: `show-${mode}`, name: `Show as ${label.toLowerCase()}`, callback: () => void this.openMode(mode) });
+    }
 
     // Every open Perlite view re-scans the vault from scratch on `refresh()` (no
     // in-memory task cache exists yet to patch instead, see `PerliteListView.refresh`'s
@@ -127,12 +159,7 @@ export default class PerlitePlugin extends Plugin {
 
   private activeListNav(): PerliteListView["keyboardNav"] | null {
     const listView = this.app.workspace.getActiveViewOfType(PerliteListView);
-    if (listView !== null) return listView.keyboardNav;
-    const detailView = this.app.workspace.getActiveViewOfType(PerliteSmartListDetailView);
-    if (detailView !== null) return detailView.keyboardNav;
-    const tagView = this.app.workspace.getActiveViewOfType(PerliteTagDetailView);
-    if (tagView !== null) return tagView.keyboardNav;
-    return null;
+    return listView !== null && this.state.view.mode === "list" ? listView.keyboardNav : null;
   }
 
   onunload(): void {
@@ -141,7 +168,15 @@ export default class PerlitePlugin extends Plugin {
 
   private async loadSettings(): Promise<void> {
     const stored = (await this.loadData()) as Partial<PerliteSettings> | null;
-    this.settings = { ...DEFAULT_SETTINGS, ...stored };
+    // `view` is merged field by field so a settings file from before a view option
+    // existed still gets that option's default.
+    this.settings = { ...DEFAULT_SETTINGS, ...stored, view: { ...DEFAULT_VIEW_SETTINGS, ...stored?.view } };
+  }
+
+  private updateStatusBar(): void {
+    if (this.statusBarEl === null) return;
+    const { open } = todayCounts(this.state.located);
+    this.statusBarEl.setText(open === 0 ? "Perlite: today is clear" : `Perlite: ${open} left today`);
   }
 
   private async saveSettings(): Promise<void> {
@@ -200,54 +235,75 @@ export default class PerlitePlugin extends Plugin {
     return true;
   }
 
-  /** Public: also called after a quick-capture write (`QuickCaptureModal`), not only
-   * from this file's own settings/smart-list mutation paths. */
+  /** Rescans the vault once into the shared state (every Perlite view re-renders from
+   * its `"data"` event) and refreshes the smart-list hub, which reads its own counts.
+   * Called after every write and on vault changes. */
   async refreshAllViews(): Promise<void> {
-    const viewTypes = [
-      PERLITE_LIST_VIEW_TYPE,
-      PERLITE_SMART_LISTS_VIEW_TYPE,
-      PERLITE_SMART_LIST_DETAIL_VIEW_TYPE,
-      PERLITE_TAG_DETAIL_VIEW_TYPE,
-    ];
-    for (const viewType of viewTypes) {
-      for (const leaf of this.app.workspace.getLeavesOfType(viewType)) {
-        const view = leaf.view;
-        if (
-          view instanceof PerliteListView ||
-          view instanceof PerliteSmartListsView ||
-          view instanceof PerliteSmartListDetailView ||
-          view instanceof PerliteTagDetailView
-        ) {
-          await view.refresh();
-        }
-      }
+    await this.state.rescan();
+    for (const leaf of this.app.workspace.getLeavesOfType(PERLITE_SMART_LISTS_VIEW_TYPE)) {
+      if (leaf.view instanceof PerliteSmartListsView) await leaf.view.refresh();
     }
   }
 
-  /** Public: also called from `PerliteSmartListsView`/`PerliteSmartListDetailView`'s own
-   * point-and-click "back to task list" header action, not only this file's ribbon icon
-   * and command. */
+  /** The ribbon icon and "Open task list": the main tab, plus the two sidebar views the
+   * design places beside it, created once if they aren't in the workspace yet. */
   async activateListView(): Promise<void> {
     await this.openPerliteView(PERLITE_LIST_VIEW_TYPE);
+    await this.ensureSidebarView(PERLITE_LENSES_VIEW_TYPE, "left");
+    await this.ensureSidebarView(PERLITE_TASK_VIEW_TYPE, "right");
   }
 
-  /** Public: also called from `PerliteListView`/`PerliteSmartListDetailView`'s own
-   * point-and-click "open smart lists" header action, not only this file's ribbon icon
-   * and command. */
   async activateSmartListsView(): Promise<void> {
     await this.openPerliteView(PERLITE_SMART_LISTS_VIEW_TYPE);
   }
 
-  /** Public: called from `PerliteSmartListsView`'s own row-click "open this list"
-   * action. */
-  async activateSmartListDetailView(smartListId: string): Promise<void> {
-    await this.openPerliteView(PERLITE_SMART_LIST_DETAIL_VIEW_TYPE, { smartListId });
+  /** Switches the main tab to `lens` (and optionally a mode) and shows it. The smart
+   * list hub, the lenses sidebar and the status bar all navigate through here. */
+  async openLens(lens: Lens, mode?: PerliteMode): Promise<void> {
+    this.state.setLens(lens);
+    if (mode !== undefined) this.state.updateView({ mode });
+    await this.activateListView();
   }
 
-  /** Public: called from `renderInteractiveTaskRow`'s tag-chip click handler — the one
-   * path every tag tap, in every lens, goes through. */
+  async openMode(mode: PerliteMode): Promise<void> {
+    this.state.updateView({ mode });
+    await this.activateListView();
+  }
+
+  /** Kept for the smart-list hub: a list opens as a lens of the main tab, in the layout
+   * its own `lens` setting asks for. */
+  async activateSmartListDetailView(smartListId: string): Promise<void> {
+    const list = this.state.smartLists.find((candidate) => candidate.id === smartListId);
+    const mode: PerliteMode | undefined = list?.lens === "kanban" ? "board" : list?.lens === "calendar" ? "calendar" : list?.lens === "list" ? "list" : undefined;
+    await this.openLens({ kind: "list", id: smartListId }, mode);
+  }
+
   async activateTagDetailView(tag: string): Promise<void> {
-    await this.openPerliteView(PERLITE_TAG_DETAIL_VIEW_TYPE, { tag });
+    await this.openLens({ kind: "tag", tag: tag.toLowerCase() });
+  }
+
+  /** Quick add, pre-filled with the current lens's defaults (Today → due today, …). */
+  openQuickAdd(initialText = ""): void {
+    new QuickCaptureModal(this.app, this, { defaults: lensCaptureDefaults(this.state.lens), initialText }).open();
+  }
+
+  async revealLensesSidebar(): Promise<void> {
+    const leaf = await this.ensureSidebarView(PERLITE_LENSES_VIEW_TYPE, "left");
+    if (leaf !== null) this.app.workspace.revealLeaf(leaf);
+  }
+
+  async revealTaskSidebar(): Promise<void> {
+    const leaf = await this.ensureSidebarView(PERLITE_TASK_VIEW_TYPE, "right");
+    if (leaf !== null) this.app.workspace.revealLeaf(leaf);
+  }
+
+  private async ensureSidebarView(viewType: string, side: "left" | "right"): Promise<WorkspaceLeaf | null> {
+    const existing = this.app.workspace.getLeavesOfType(viewType)[0];
+    if (existing !== undefined) return existing;
+    const leaf = side === "left" ? this.app.workspace.getLeftLeaf(false) : this.app.workspace.getRightLeaf(false);
+    if (leaf === null) return null;
+    await leaf.setViewState({ type: viewType, active: false });
+    return leaf;
   }
 
   /** The one place any Perlite navigation actually moves a leaf — every `activate*View`

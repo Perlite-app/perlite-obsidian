@@ -50,6 +50,9 @@ export class ListKeyboardNav {
   private expansionEl: HTMLElement | null = null;
   private liveRegion: HTMLElement | null = null;
   private listboxEl: HTMLElement | null = null;
+  /** Called whenever the selected row changes (keyboard or `selectRow`) — the main tab
+   * forwards it to the shared state so the Task sidebar follows the keyboard. */
+  onSelectionChange: ((row: KeyboardNavRow | null) => void) | null = null;
 
   constructor(view: ItemView, app: App, plugin: PerlitePlugin, onAfterWrite: () => void | Promise<void>) {
     this.view = view;
@@ -113,6 +116,15 @@ export class ListKeyboardNav {
     const next = this.selectedIndex === null ? (delta > 0 ? 0 : this.rows.length - 1) : clamp(this.selectedIndex + delta, 0, this.rows.length - 1);
     this.selectedIndex = next;
     this.applySelectionStyling(true);
+    this.onSelectionChange?.(this.selected());
+  }
+
+  /** Selects the row whose element is `rowEl` (a mouse click), or clears the selection
+   * when it isn't one of the current rows. Doesn't scroll or announce. */
+  selectRow(rowEl: HTMLElement | null): void {
+    const index = rowEl === null ? -1 : this.rows.findIndex((row) => row.rowEl === rowEl);
+    this.selectedIndex = index === -1 ? null : index;
+    this.applySelectionStyling(false);
   }
 
   private applySelectionStyling(scrollAndAnnounce: boolean): void {

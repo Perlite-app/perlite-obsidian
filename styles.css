@@ -105,295 +105,6 @@
   --perlite-spacing-xl: var(--size-4-6); /* 24px */
 }
 
-/* ---- Semantic section accents ---------------------------------------------------------
- * A small, fixed set of "what kind of section is this" colours — distinct from the
- * user-selectable smart-list palette above, which is per-*list*, not per-*segment*. Reuse
- * the same underlying tokens rather than inventing new hues: overdue reads as the same
- * red as a highest-priority chip, today as Obsidian's own accent colour (so it always
- * matches the user's theme, not a fixed hue), upcoming as the same orange as a high-
- * priority chip. */
-.perlite-accent-overdue {
-  color: var(--perlite-priority-highest);
-}
-.perlite-accent-today {
-  color: var(--interactive-accent);
-}
-.perlite-accent-upcoming {
-  color: var(--perlite-priority-high);
-}
-.perlite-accent-done {
-  color: var(--perlite-status-done);
-}
-.perlite-tag-accent {
-  color: var(--perlite-tag);
-}
-
-/* ---- Accessibility --------------------------------------------------------------------
- * A visible focus ring on every keyboard-reachable Perlite control — previously only
- * `ListKeyboardNav`'s own row selection had one, so tabbing to anything else (a chip, a
- * header action, a calendar cell) left no visible indicator at all. */
-.perlite-tag-chip:focus-visible,
-.perlite-task-row__status--interactive:focus-visible,
-.perlite-smart-list-row__menu:focus-visible,
-.perlite-criterion-row__remove:focus-visible,
-.perlite-empty-state__action:focus-visible,
-.perlite-view-header__actions button:focus-visible,
-.perlite-calendar-nav:focus-visible,
-.perlite-calendar-cell:focus-visible,
-.perlite-drag-handle:focus-visible {
-  outline: 2px solid var(--interactive-accent);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .perlite-task-row,
-  .perlite-tag-chip,
-  .perlite-chip--due-flash,
-  .perlite-kanban-card,
-  .perlite-calendar-nav,
-  .perlite-drag-handle {
-    transition-duration: 0.01ms;
-  }
-}
-
-/* ---- Task row -------------------------------------------------------------------------
- * One task: status icon, description (with inline tag chips), source context, and a
- * wrapping row of field chips (due/priority/recurrence/subtasks) — the single row shape
- * every view (list now, kanban/calendar later) renders through, never its own markup.
- * Mirrors `TaskRow.swift`'s layout (an `HStack` of status + a `VStack` of everything
- * else) directly onto flexbox. */
-.perlite-task-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--perlite-spacing-sm);
-  padding: var(--perlite-spacing-sm);
-  border-radius: var(--radius-s);
-  transition: background-color 100ms ease-out;
-}
-
-.perlite-task-row:hover {
-  background-color: var(--background-modifier-hover);
-}
-
-/* Hairline rhythm between rows in a flat list/detail segment — scoped to
- * `.perlite-segment__list` specifically so kanban cards and calendar agenda rows (each
- * wrapped in their own container, not a direct child here) stay unaffected. */
-.perlite-segment__list > .perlite-list-view__row + .perlite-list-view__row {
-  border-top: 1px solid var(--background-modifier-border);
-}
-
-.perlite-task-row__status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  margin-top: 1px;
-  padding: 0;
-  border-radius: 50%;
-  background: none;
-  border: none;
-  box-shadow: none;
-  color: var(--perlite-status-icon-color, var(--text-normal));
-  cursor: pointer;
-  transition: background-color 100ms ease-out, color 100ms ease-out;
-}
-
-.perlite-task-row__status--interactive:hover {
-  background-color: var(--background-modifier-hover);
-  color: var(--interactive-accent);
-}
-
-.perlite-task-row__status:not(.perlite-task-row__status--interactive) {
-  cursor: default;
-}
-
-.perlite-task-row__status:not(.perlite-task-row__status--interactive):hover {
-  color: var(--perlite-status-icon-color, var(--text-normal));
-}
-
-.perlite-task-row__status svg {
-  width: 100%;
-  height: 100%;
-}
-
-.perlite-task-row__main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.perlite-task-row__breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-}
-
-.perlite-task-row__breadcrumb svg {
-  width: 11px;
-  height: 11px;
-  flex-shrink: 0;
-}
-
-.perlite-task-row__context {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-faint);
-  width: fit-content;
-}
-/* Wave 2 chunk 12: the one hoverable element that triggers Page Preview's own
- * `hover-link` popover — the underline-on-hover matches how a real internal link
- * reads, so the preview affordance isn't a surprise. */
-.perlite-task-row__context:hover {
-  color: var(--text-muted);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* ---- Description + inline tag chips ------------------------------------------------
- * `renderTaskLine.ts` tokenises the description into words and recognised #tag tokens
- * (mirroring `TaggedText.swift`'s own regex-then-membership-check approach) and lays
- * them out with wrapping flex — the DOM equivalent of `TaggedText`'s custom
- * `FlowLayout`, needed for the same reason: a chip needs a real rounded background a
- * plain inline text run can't give a substring. */
-.perlite-task-description {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 0.3em;
-  color: var(--text-normal);
-  line-height: 1.35;
-}
-
-.perlite-task-description--done {
-  color: var(--text-muted);
-}
-
-.perlite-task-description__word {
-  text-decoration: none;
-}
-
-.perlite-task-description--done .perlite-task-description__word {
-  text-decoration: line-through;
-  text-decoration-color: var(--text-faint);
-}
-
-.perlite-tag-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background-color: rgba(var(--perlite-tag-rgb), 0.15);
-  color: var(--perlite-tag);
-  font-size: var(--font-ui-small);
-  text-decoration: none;
-  line-height: 1.5;
-  cursor: pointer;
-  transition:
-    background-color 100ms ease-out,
-    filter 100ms ease-out;
-}
-
-.perlite-tag-chip:hover {
-  background-color: rgba(var(--perlite-tag-rgb), 0.25);
-}
-
-.perlite-task-description--done .perlite-tag-chip {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-/* ---- Field chip row -------------------------------------------------------------------
- * Wrapping flex row of due/priority/recurrence/subtask-progress chips — the DOM
- * equivalent of `TaskRow.swift`'s own `FlowLayout`-based chip row, same reasoning: a
- * plain non-wrapping row would compress a chip's own text instead of wrapping the whole
- * chip to a new line under horizontal pressure. */
-.perlite-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-}
-
-/* A tinted pill, same family as `.perlite-tag-chip` above — `background-color` is
- * declared twice: the first (a flat theme colour) is the whole rule for any renderer
- * without `color-mix()` support, the second silently overrides it everywhere else. Tint
- * derives from `currentColor`, so a plain due/recurrence chip (inheriting
- * `.perlite-chip-row`'s muted colour) gets a neutral pill and a coloured priority chip
- * (via the modifiers below) gets a matching tinted one, with no extra rule needed per
- * colour. */
-.perlite-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background-color: var(--background-modifier-hover);
-  background-color: color-mix(in srgb, currentColor 14%, transparent);
-}
-
-.perlite-chip svg {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-.perlite-chip--icon-only svg {
-  width: 12px;
-  height: 12px;
-}
-
-/* Colour modifiers — same token names as the native app, applied as classes so a user's
- * own CSS snippet can target/override them without touching plugin internals. */
-.perlite-chip--priority-highest {
-  color: var(--perlite-priority-highest);
-}
-.perlite-chip--priority-high {
-  color: var(--perlite-priority-high);
-}
-.perlite-chip--priority-medium {
-  color: var(--perlite-priority-medium);
-}
-.perlite-chip--priority-low {
-  color: var(--perlite-priority-low);
-}
-.perlite-chip--priority-lowest {
-  color: var(--perlite-priority-lowest);
-}
-.perlite-chip--due-flash {
-  color: var(--perlite-recurrence-highlight);
-  transition: color 400ms ease-out;
-}
-
-/* ---- Status icon colour, applied via class per task-status kind ---------------------- */
-.perlite-status-todo {
-  --perlite-status-icon-color: var(--text-normal);
-}
-.perlite-status-done {
-  --perlite-status-icon-color: var(--perlite-status-done);
-}
-.perlite-status-cancelled {
-  --perlite-status-icon-color: var(--text-muted);
-}
-.perlite-status-custom {
-  --perlite-status-icon-color: var(--perlite-status-custom);
-}
-
-/* ---- List lens (Wave 1 chunk 8) -------------------------------------------------------
- * The single centralized view rendering the four default segments (Overdue/Today/
- * Upcoming/No Date), each as one `.perlite-segment`. */
-.perlite-list-view {
-  padding: var(--perlite-spacing-md);
-  overflow-y: auto;
-}
-
 /* ---- View header (sticky title bar + action cluster, `renderViewHeader.ts`) ---------- */
 .perlite-view-header {
   position: sticky;
@@ -479,28 +190,6 @@
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   font-variant-numeric: tabular-nums;
-}
-
-.perlite-segment + .perlite-segment {
-  margin-top: var(--perlite-spacing-lg);
-}
-
-.perlite-segment__list {
-  display: flex;
-  flex-direction: column;
-}
-
-.perlite-list-view__row {
-  cursor: pointer;
-}
-
-.perlite-conflict-banner {
-  margin-bottom: var(--perlite-spacing-md);
-  padding: var(--perlite-spacing-sm) var(--perlite-spacing-md);
-  border-radius: var(--radius-s);
-  background-color: var(--background-modifier-error);
-  color: var(--text-normal);
-  font-size: var(--font-ui-smaller);
 }
 
 /* ---- Empty state (icon + title + optional hint/action, `renderEmptyState.ts`) -------- */
@@ -737,269 +426,1614 @@
   word-break: break-word;
 }
 
-/* ---- Quick capture (Wave 2 chunk 13) --------------------------------------------------- */
-.perlite-quickadd-input {
-  width: 100%;
-  resize: vertical;
+/* ======================================================================================
+ * Design pass (2026-10): the main tab, lenses sidebar, Task sidebar and Quick add.
+ *
+ * Colours come only from Obsidian's own theme variables — `--interactive-accent`,
+ * `--text-*`, `--background-*` and the `--color-*` palette (with their `-rgb` twins for
+ * tints) — so every theme, light or dark, owns the look. Priority reads as the ring
+ * colour: highest red, high orange, medium yellow, low blue, lowest cyan.
+ * ==================================================================================== */
+
+.perlite-main {
+  position: relative;
 }
 
-/* Renders the *real* `renderTaskLine` row for whatever was just parsed — what's
- * previewed here is exactly the row you'll get, not a separate emoji-summary string. */
-.perlite-quickadd-preview {
-  margin: var(--perlite-spacing-xs) 0 var(--perlite-spacing-sm) 0;
-  border-radius: var(--radius-s);
-  background-color: var(--background-secondary);
-}
-.perlite-quickadd-preview:empty {
-  display: none;
-}
-.perlite-quickadd-preview .perlite-task-row {
-  padding: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
-  pointer-events: none;
-}
-.perlite-quickadd-preview .perlite-task-row:hover {
-  background-color: transparent;
+.perlite-main__body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--size-4-2) var(--size-4-4) var(--size-4-12);
 }
 
-/* ---- Drag-and-drop (Wave 3, dragController.ts — shared by kanban + calendar) ---------- */
-.perlite-drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: grab;
-  color: var(--text-faint);
-  touch-action: none; /* let Pointer Events drive the drag instead of native scroll/pan */
-  transition: opacity 100ms ease-out, color 100ms ease-out;
-}
-.perlite-drag-handle:hover {
-  color: var(--text-muted);
-}
-
-.perlite-drag-source--dragging {
-  opacity: 0.4;
-}
-
-.perlite-drag-ghost {
-  position: fixed;
-  z-index: var(--layer-popover);
-  pointer-events: none;
-  opacity: 0.9;
-  box-shadow: var(--shadow-l);
-  border-radius: var(--radius-s);
-  background-color: var(--background-primary);
-}
-
-.perlite-drop-target--active {
-  outline: 2px dashed var(--interactive-accent);
-  outline-offset: -2px;
+/* ---- Shared controls ---------------------------------------------------------------- */
+.perlite-segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-m);
   background-color: var(--background-modifier-hover);
 }
 
-/* ---- Kanban lens (Wave 3) --------------------------------------------------------------- */
-.perlite-kanban-board {
+.perlite-segmented--fill {
   display: flex;
-  align-items: flex-start;
-  gap: var(--perlite-spacing-md);
-  overflow-x: auto;
-  padding-bottom: var(--perlite-spacing-sm);
 }
 
-.perlite-kanban-column {
-  flex: 0 0 260px;
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
-  background-color: var(--background-secondary);
+.perlite-segmented--fill button.perlite-segmented__option {
+  flex: 1 1 0;
+  justify-content: center;
 }
 
-.perlite-kanban-column__header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: var(--perlite-spacing-sm) var(--perlite-spacing-sm) 0;
-  background-color: var(--background-secondary);
-  border-radius: var(--radius-m) var(--radius-m) 0 0;
-}
-.perlite-kanban-column__header .perlite-section-header {
-  margin-bottom: var(--perlite-spacing-sm);
-}
-
-.perlite-kanban-column__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--perlite-spacing-xs);
-  min-height: 24px; /* keeps an empty column a real drop target, not a zero-height sliver */
-  padding: 0 var(--perlite-spacing-sm) var(--perlite-spacing-sm);
-  overflow-y: auto;
-}
-
-.perlite-kanban-card {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--perlite-spacing-xs);
-  background-color: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
+button.perlite-segmented__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  height: auto;
+  min-height: 28px;
+  padding: var(--size-2-2) var(--size-4-2);
+  border: none;
   border-radius: var(--radius-s);
-  padding: var(--perlite-spacing-xs);
-  transition: box-shadow 100ms ease-out, border-color 100ms ease-out;
-}
-.perlite-kanban-card:hover {
-  border-color: var(--interactive-accent);
-  box-shadow: var(--shadow-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
 }
 
-.perlite-kanban-card .perlite-task-row {
-  flex: 1;
+button.perlite-segmented__option[aria-checked="true"] {
+  background-color: var(--background-primary);
+  box-shadow: var(--shadow-s);
+  color: var(--text-normal);
+}
+
+.perlite-segmented--stacked button.perlite-segmented__option {
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--size-4-1) 2px;
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-segmented__icon {
+  display: inline-flex;
+}
+
+.perlite-segmented__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.perlite-chips__label {
+  margin-right: var(--size-4-1);
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+button.perlite-chips__chip {
+  height: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+button.perlite-chips__chip[aria-checked="true"] {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+button.perlite-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+button.perlite-icon-button:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+button.perlite-icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perlite-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+.perlite-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-banner {
+  margin-bottom: var(--size-4-3);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-m);
+  background-color: rgba(var(--color-orange-rgb), 0.12);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin: var(--size-4-4) 0 var(--size-4-2);
+}
+
+.perlite-toolbar__count {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Header ------------------------------------------------------------------------- */
+.perlite-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-3);
+  padding: var(--size-4-2) 0 var(--size-4-3);
+}
+
+/* A ring drawn with a conic gradient masked to an annulus — no SVG, follows the accent. */
+.perlite-progress {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: conic-gradient(var(--interactive-accent) calc(var(--perlite-progress, 0) * 1turn), var(--background-modifier-border) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+}
+
+.perlite-header__titles {
+  flex: 1 1 200px;
   min-width: 0;
 }
 
-/* The handle only fades in on hover/focus — a permanently visible grip on every card
- * reads as clutter on a board where most columns aren't even draggable. */
-.perlite-kanban-card .perlite-drag-handle {
-  opacity: 0;
+.perlite-header__title {
+  font-size: var(--h2-size);
+  font-weight: var(--font-bold);
+  line-height: 1.2;
 }
-.perlite-kanban-card:hover .perlite-drag-handle,
-.perlite-kanban-card:focus-within .perlite-drag-handle {
+
+.perlite-header__subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* ---- Capture field (mirror + transparent textarea in one grid cell) ----------------- */
+.perlite-capture {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.perlite-capture > .perlite-capture__mirror,
+.perlite-capture > textarea.perlite-capture__input {
+  grid-area: 1 / 1;
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-medium);
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.perlite-capture.is-large > .perlite-capture__mirror,
+.perlite-capture.is-large > textarea.perlite-capture__input {
+  font-size: 1.3em;
+  font-weight: var(--font-medium);
+}
+
+.perlite-capture__mirror {
+  color: var(--text-normal);
+  pointer-events: none;
+}
+
+textarea.perlite-capture__input,
+textarea.perlite-capture__input:focus,
+textarea.perlite-capture__input:hover {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  resize: none;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  caret-color: var(--interactive-accent);
+}
+
+textarea.perlite-capture__input::placeholder {
+  color: var(--text-faint);
+}
+
+.perlite-token--date,
+.perlite-token--recurrence,
+.perlite-token--tag {
+  border-radius: 4px;
+  background-color: hsla(var(--interactive-accent-hsl), 0.15);
+  color: var(--text-accent);
+}
+
+.perlite-token--priority {
+  border-radius: 4px;
+  background-color: rgba(var(--color-orange-rgb), 0.15);
+  color: var(--color-orange);
+}
+
+.perlite-capture-box {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background-color: var(--background-primary);
+}
+
+.perlite-capture-box:focus-within {
+  border-color: var(--interactive-accent);
+}
+
+.perlite-capture-box__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+}
+
+.perlite-capture-box__icon {
+  display: inline-flex;
+  margin-top: 5px;
+  color: var(--text-faint);
+}
+
+.perlite-capture-box__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perlite-capture-box__hint {
+  flex: none;
+  margin-top: 6px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-capture-box__preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.perlite-capture-box__preview.is-empty {
+  display: none;
+}
+
+.perlite-capture-box__dest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-capture-box__dest svg {
+  width: 12px;
+  height: 12px;
+}
+
+.perlite-capture-box__md,
+.perlite-quickadd__preview code,
+.perlite-task-panel__md,
+.perlite-toast__md {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  background: none;
+}
+
+/* ---- Up next ------------------------------------------------------------------------ */
+.perlite-upnext {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+  margin-top: var(--size-4-3);
+  padding: var(--size-4-3) var(--size-4-4);
+  border-radius: var(--radius-l);
+  background-color: hsla(var(--interactive-accent-hsl), 0.08);
+}
+
+.perlite-upnext__text {
+  min-width: 0;
+}
+
+.perlite-upnext__eyebrow {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.perlite-upnext__eyebrow .is-overdue,
+.perlite-group__head[data-tone="overdue"],
+.perlite-field.is-overdue .perlite-field__value {
+  color: var(--color-orange);
+}
+
+.perlite-upnext__title {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin: 2px 0;
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-upnext__crumb {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-upnext__actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+/* ---- Groups and rows ---------------------------------------------------------------- */
+.perlite-group {
+  margin-top: var(--size-4-3);
+}
+
+.perlite-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1) var(--size-4-2);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-group__icon {
+  display: inline-flex;
+  color: var(--text-faint);
+}
+
+.perlite-group__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-group__prefix {
+  color: var(--text-faint);
+  font-weight: var(--font-normal);
+}
+
+.perlite-group__count,
+.perlite-column__count {
+  margin-left: auto;
+  padding: 0 var(--size-4-2);
+  border-radius: var(--radius-s);
+  background-color: var(--background-modifier-hover);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.perlite-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1) var(--size-4-2) var(--size-4-1) 0;
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+
+.perlite-row:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-row.is-selected,
+.perlite-row.perlite-row--selected,
+.perlite-card.is-selected {
+  background-color: hsla(var(--interactive-accent-hsl), 0.14);
+}
+
+button.perlite-row__toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+button.perlite-row__toggle:disabled {
+  cursor: default;
   opacity: 1;
 }
 
-/* ---- Calendar lens (Wave 3) -------------------------------------------------------------- */
-.perlite-calendar-header {
+.perlite-row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 0;
+}
+
+.perlite-row__title {
+  color: var(--text-normal);
+  line-height: 1.4;
+}
+
+.perlite-row.is-done .perlite-row__title,
+.perlite-card.is-done button.perlite-card__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.perlite-row__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--perlite-spacing-sm);
-  margin-bottom: var(--perlite-spacing-sm);
+  gap: 2px var(--size-4-2);
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
 }
 
-.perlite-calendar-header__title {
-  flex: 1;
-  margin: 0;
-  text-align: center;
+.perlite-row__icon {
+  display: inline-flex;
 }
 
-.perlite-calendar-nav {
-  display: flex;
+.perlite-row__icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.perlite-row__tags {
+  color: var(--text-accent);
+}
+
+.perlite-pill {
+  padding: 0 6px;
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.perlite-pill.is-overdue {
+  background-color: rgba(var(--color-orange-rgb), 0.16);
+  color: var(--color-orange);
+}
+
+.perlite-pill--priority {
+  color: var(--perlite-ring, var(--text-muted));
+}
+
+/* The ring: priority colour; done = accent fill + check; in progress = accent dot. */
+.perlite-ring,
+.perlite-pill--priority {
+  --perlite-ring: var(--text-faint);
+}
+
+.perlite-ring[data-priority="highest"],
+.perlite-pill--priority[data-priority="highest"],
+.perlite-cal-chip[data-priority="highest"] {
+  --perlite-ring: var(--color-red);
+}
+
+.perlite-ring[data-priority="high"],
+.perlite-pill--priority[data-priority="high"],
+.perlite-cal-chip[data-priority="high"] {
+  --perlite-ring: var(--color-orange);
+}
+
+.perlite-ring[data-priority="medium"],
+.perlite-pill--priority[data-priority="medium"],
+.perlite-cal-chip[data-priority="medium"] {
+  --perlite-ring: var(--color-yellow);
+}
+
+.perlite-ring[data-priority="low"],
+.perlite-pill--priority[data-priority="low"],
+.perlite-cal-chip[data-priority="low"] {
+  --perlite-ring: var(--color-blue);
+}
+
+.perlite-ring[data-priority="lowest"],
+.perlite-pill--priority[data-priority="lowest"],
+.perlite-cal-chip[data-priority="lowest"] {
+  --perlite-ring: var(--color-cyan);
+}
+
+.perlite-ring {
+  display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: var(--radius-s);
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: var(--perlite-spacing-xs);
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--perlite-ring);
+  border-radius: 50%;
+  color: var(--text-on-accent);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
-.perlite-calendar-nav:hover {
-  color: var(--text-normal);
-  background-color: var(--background-modifier-hover);
+
+.perlite-ring svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 3;
 }
-.perlite-calendar-nav--today {
-  padding: 2px 10px;
-  border: 1px solid var(--background-modifier-border);
-  font-size: var(--font-ui-smaller);
-}
-.perlite-calendar-nav--today:hover {
-  color: var(--interactive-accent);
+
+.perlite-ring[data-status="done"] {
   border-color: var(--interactive-accent);
-  background-color: transparent;
+  background-color: var(--interactive-accent);
 }
 
-.perlite-calendar-weekdays,
-.perlite-calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+.perlite-ring[data-status="doing"],
+.perlite-ring[data-status="custom"] {
+  border-color: var(--interactive-accent);
 }
 
-.perlite-calendar-weekday {
-  text-align: center;
-  font-size: var(--font-ui-smaller);
+.perlite-ring[data-status="cancelled"] {
+  border-color: var(--text-faint);
+  color: var(--text-faint);
+}
+
+.perlite-ring__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--interactive-accent);
+}
+
+button.perlite-row__toggle:not(:disabled):hover .perlite-ring {
+  background-color: rgba(var(--color-green-rgb), 0.2);
+}
+
+/* ---- Board -------------------------------------------------------------------------- */
+.perlite-board {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-3);
+  overflow-x: auto;
+  padding-bottom: var(--size-4-3);
+}
+
+.perlite-column {
+  display: flex;
+  flex: 0 0 280px;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  border: 2px solid transparent;
+  border-radius: var(--radius-l);
+  background-color: var(--background-secondary);
+}
+
+.perlite-column.is-drop-target,
+button.perlite-board__folded.is-drop-target,
+.perlite-cal-day.is-drop-target,
+.perlite-cal-cell.is-drop-target,
+.perlite-cal-tray.is-drop-target {
+  border-color: var(--interactive-accent);
+  background-color: hsla(var(--interactive-accent-hsl), 0.1);
+}
+
+.perlite-column__head {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3) var(--size-4-3) var(--size-4-2);
+}
+
+.perlite-column__icon {
+  display: inline-flex;
   color: var(--text-muted);
-  padding-bottom: var(--perlite-spacing-xs);
 }
 
-/* A real `<button>` (keyboard-focusable, unlike the click-handled `<div>` this used to
- * be) — the first six declarations strip the browser's own button chrome so it still
- * reads as a plain grid cell, not a form control. */
-.perlite-calendar-cell {
-  width: 100%;
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
+.perlite-column[data-tone="doing"] .perlite-column__icon {
+  color: var(--text-accent);
+}
+
+.perlite-column[data-tone="done"] .perlite-column__icon {
+  color: var(--color-green);
+}
+
+.perlite-column[data-tone="highest"] .perlite-column__icon {
+  color: var(--color-red);
+}
+
+.perlite-column[data-tone="high"] .perlite-column__icon {
+  color: var(--color-orange);
+}
+
+.perlite-column[data-tone="medium"] .perlite-column__icon {
+  color: var(--color-yellow);
+}
+
+.perlite-column[data-tone="low"] .perlite-column__icon {
+  color: var(--color-blue);
+}
+
+.perlite-column[data-tone="lowest"] .perlite-column__icon {
+  color: var(--color-cyan);
+}
+
+.perlite-column__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perlite-column__name {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-column__count {
+  margin-left: 0;
+}
+
+.perlite-column__badge {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-column__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  overflow-y: auto;
+  padding: 0 var(--size-4-2) var(--size-4-3);
+}
+
+.perlite-column__empty {
+  padding: var(--size-4-4) 0;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+button.perlite-board__folded {
+  display: flex;
+  flex: 0 0 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-4-2);
+  height: auto;
+  min-height: 200px;
+  padding: var(--size-4-3) 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-l);
+  background-color: var(--background-secondary);
   box-shadow: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.perlite-board__folded-label {
+  writing-mode: vertical-rl;
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--size-4-1) var(--size-4-1) var(--size-4-1) 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-primary);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.perlite-card:hover {
+  box-shadow: var(--shadow-s);
+}
+
+.perlite-card.is-dragging {
+  opacity: 0.35;
+}
+
+.perlite-card__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 0;
+}
+
+button.perlite-card__title,
+button.perlite-card__select {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.perlite-card__crumb {
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-card__more {
+  opacity: 0;
+}
+
+.perlite-card:hover .perlite-card__more,
+.perlite-card__more:focus-visible,
+.is-mobile .perlite-card__more {
+  opacity: 1;
+}
+
+/* ---- Calendar ----------------------------------------------------------------------- */
+.perlite-cal-toolbar__titles {
+  margin-right: auto;
+}
+
+.perlite-cal-toolbar__title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-cal-toolbar__subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-cal-toolbar__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+.perlite-cal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: var(--size-4-3);
+  align-items: start;
+}
+
+.perlite-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--size-4-2);
+}
+
+.perlite-cal-day {
+  min-height: 320px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-l);
+  background-color: var(--background-secondary);
+}
+
+.perlite-cal-day.is-weekend {
+  background-color: var(--background-secondary-alt);
+}
+
+.perlite-cal-day.is-today {
+  background-color: hsla(var(--interactive-accent-hsl), 0.1);
+}
+
+.perlite-cal-day__head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: var(--perlite-spacing-xs) 0;
-  border-radius: var(--radius-s);
-  cursor: pointer;
+  gap: 2px;
+  padding: var(--size-4-2) 0;
 }
-.perlite-calendar-cell:hover {
-  background-color: var(--background-modifier-hover);
+
+.perlite-cal-day__dow {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
 }
-.perlite-calendar-cell--outside-month {
-  color: var(--text-faint);
+
+.perlite-cal-day.is-today .perlite-cal-day__dow {
+  color: var(--text-accent);
 }
-.perlite-calendar-cell__day {
-  display: flex;
+
+.perlite-cal-day__num {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-}
-.perlite-calendar-cell--today .perlite-calendar-cell__day {
-  background-color: rgba(var(--interactive-accent-rgb), 0.15);
-  color: var(--interactive-accent);
   font-weight: var(--font-semibold);
 }
-.perlite-calendar-cell--selected .perlite-calendar-cell__day {
-  outline: 1.5px solid var(--interactive-accent);
-  outline-offset: -1.5px;
+
+.perlite-cal-day.is-today .perlite-cal-day__num {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
-.perlite-calendar-cell__dots {
+
+.perlite-cal-day__load {
+  min-height: 1.2em;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-cal-day__items {
   display: flex;
-  gap: 3px;
-  height: 5px;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  padding: 0 var(--size-4-1) var(--size-4-2);
 }
-.perlite-calendar-dot {
-  width: 5px;
-  height: 5px;
+
+.perlite-card--calendar button.perlite-row__toggle {
+  width: 26px;
+  height: 26px;
+}
+
+.perlite-card--calendar .perlite-ring {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-cal-month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--size-4-1);
+}
+
+.perlite-cal-month__dow {
+  padding-bottom: var(--size-4-1);
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+.perlite-cal-cell {
+  min-height: 96px;
+  padding: var(--size-4-1);
+  border: 2px solid transparent;
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+}
+
+.perlite-cal-cell.is-outside {
+  opacity: 0.55;
+}
+
+.perlite-cal-cell.is-today {
+  background-color: hsla(var(--interactive-accent-hsl), 0.1);
+}
+
+.perlite-cal-cell__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-bottom: 2px;
   border-radius: 50%;
-}
-.perlite-calendar-dot--priority-highest {
-  background-color: var(--perlite-priority-highest);
-}
-.perlite-calendar-dot--priority-high {
-  background-color: var(--perlite-priority-high);
-}
-.perlite-calendar-dot--priority-medium {
-  background-color: var(--perlite-priority-medium);
-}
-.perlite-calendar-dot--priority-normal {
-  background-color: var(--text-muted);
-}
-.perlite-calendar-dot--priority-low {
-  background-color: var(--perlite-priority-low);
-}
-.perlite-calendar-dot--priority-lowest {
-  background-color: var(--perlite-priority-lowest);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
 }
 
-.perlite-calendar-agenda {
-  margin-top: var(--perlite-spacing-md);
+.perlite-cal-cell.is-today .perlite-cal-cell__num {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
-.perlite-calendar-agenda-row {
+.perlite-cal-chip {
   display: flex;
-  align-items: flex-start;
-  gap: var(--perlite-spacing-xs);
+  align-items: center;
+  gap: 4px;
+  padding: 1px 4px;
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+  --perlite-ring: var(--text-faint);
 }
-.perlite-calendar-agenda-row .perlite-task-row {
-  flex: 1;
+
+.perlite-cal-chip:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-cal-chip.is-done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.perlite-cal-chip__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--perlite-ring);
+}
+
+.perlite-cal-chip__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.perlite-cal-cell__more {
+  height: auto;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+.perlite-cal-tray {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3);
+  border: 2px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background-color: var(--background-primary);
+}
+
+.perlite-cal-tray__head {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.perlite-cal-tray__head h2 {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-cal-tray__hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+@media (max-width: 900px) {
+  .perlite-cal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perlite-cal-week {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perlite-cal-day {
+    min-height: 0;
+  }
+
+  .perlite-cal-day__head {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--size-4-2);
+    padding: var(--size-4-2) var(--size-4-3);
+  }
+}
+
+/* ---- Toast -------------------------------------------------------------------------- */
+.perlite-toast {
+  position: absolute;
+  left: 50%;
+  bottom: var(--size-4-4);
+  z-index: var(--layer-popover);
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  max-width: min(640px, calc(100% - 32px));
+  padding: var(--size-4-2) var(--size-4-2) var(--size-4-2) var(--size-4-4);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background-color: var(--background-primary);
+  box-shadow: var(--shadow-l);
+  transform: translateX(-50%);
+}
+
+.perlite-toast__text {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+}
+
+.perlite-toast__headline {
+  font-size: var(--font-ui-small);
+}
+
+/* ---- Lenses sidebar ----------------------------------------------------------------- */
+.perlite-lenses {
+  padding: var(--size-4-2);
+}
+
+.perlite-lenses__group + .perlite-lenses__group {
+  margin-top: var(--size-4-4);
+}
+
+.perlite-lenses__heading {
+  margin: 0 0 var(--size-4-1);
+  padding: 0 var(--size-4-2);
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+button.perlite-lenses__item {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  width: 100%;
+  height: auto;
+  padding: var(--size-4-1) var(--size-4-2);
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  text-align: left;
+  cursor: pointer;
+}
+
+button.perlite-lenses__item:hover,
+button.perlite-lenses__item[aria-current="page"] {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.perlite-lenses__icon {
+  display: inline-flex;
+  flex: none;
+}
+
+.perlite-lenses__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.perlite-lenses__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perlite-lenses__prefix {
+  color: var(--text-faint);
+}
+
+.perlite-lenses__count {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+button.perlite-lenses__more {
+  height: auto;
+  margin-top: 2px;
+  padding: 2px var(--size-4-2);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-accent);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+.perlite-mini {
+  margin-bottom: var(--size-4-4);
+  padding: var(--size-4-2);
+  border-radius: var(--radius-m);
+  background-color: var(--background-primary);
+}
+
+.perlite-mini__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-1);
+  font-size: var(--font-ui-small);
+}
+
+.perlite-mini__title {
+  font-weight: var(--font-semibold);
+}
+
+.perlite-mini__field {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-mini__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.perlite-mini__dow {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+button.perlite-mini__day {
+  position: relative;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+button.perlite-mini__day.is-outside {
+  color: var(--text-faint);
+}
+
+button.perlite-mini__day.is-in-week {
+  background-color: hsla(var(--interactive-accent-hsl), 0.12);
+}
+
+button.perlite-mini__day.is-today {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-weight: var(--font-bold);
+}
+
+button.perlite-mini__day.has-tasks::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.6;
+  transform: translateX(-50%);
+}
+
+/* ---- Task sidebar ------------------------------------------------------------------- */
+.perlite-task-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-4);
+  padding: var(--size-4-3);
+}
+
+.perlite-task-panel__empty {
+  padding: var(--size-4-6) var(--size-4-2);
+  color: var(--text-faint);
+  font-size: var(--font-ui-small);
+  text-align: center;
+}
+
+.perlite-task-panel__where,
+.perlite-task-panel__label {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-task-panel__title {
+  margin-top: 2px;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-task-panel__label {
+  margin-bottom: var(--size-4-1);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-task-panel__md {
+  display: block;
+  padding: var(--size-4-2);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+}
+
+.perlite-task-panel__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-task-panel__open svg {
+  width: 12px;
+  height: 12px;
+}
+
+button.perlite-segmented__option[data-priority="highest"][aria-checked="true"] .perlite-segmented__icon {
+  color: var(--color-red);
+}
+
+button.perlite-segmented__option[data-priority="high"][aria-checked="true"] .perlite-segmented__icon {
+  color: var(--color-orange);
+}
+
+button.perlite-segmented__option[data-priority="medium"][aria-checked="true"] .perlite-segmented__icon {
+  color: var(--color-yellow);
+}
+
+button.perlite-segmented__option[data-priority="low"][aria-checked="true"] .perlite-segmented__icon {
+  color: var(--color-blue);
+}
+
+button.perlite-segmented__option[data-priority="lowest"][aria-checked="true"] .perlite-segmented__icon {
+  color: var(--color-cyan);
+}
+
+.perlite-fields {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.perlite-field {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  padding: var(--size-4-1) var(--size-4-2);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  text-align: left;
+}
+
+button.perlite-field {
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-weight: var(--font-normal);
+}
+
+button.perlite-field:not(:disabled) {
+  cursor: pointer;
+}
+
+button.perlite-field:not(:disabled):hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-fields .perlite-field + .perlite-field {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.perlite-field__tile {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-s);
+}
+
+.perlite-field__tile svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-field__tile[data-tone="red"] {
+  background-color: rgba(var(--color-red-rgb), 0.18);
+  color: var(--color-red);
+}
+
+.perlite-field__tile[data-tone="orange"] {
+  background-color: rgba(var(--color-orange-rgb), 0.18);
+  color: var(--color-orange);
+}
+
+.perlite-field__tile[data-tone="green"] {
+  background-color: rgba(var(--color-green-rgb), 0.18);
+  color: var(--color-green);
+}
+
+.perlite-field__tile[data-tone="cyan"] {
+  background-color: rgba(var(--color-cyan-rgb), 0.18);
+  color: var(--color-cyan);
+}
+
+.perlite-field__tile[data-tone="blue"] {
+  background-color: rgba(var(--color-blue-rgb), 0.18);
+  color: var(--color-blue);
+}
+
+.perlite-field__tile[data-tone="purple"] {
+  background-color: rgba(var(--color-purple-rgb), 0.18);
+  color: var(--color-purple);
+}
+
+.perlite-field__name {
+  flex: 1 1 auto;
+}
+
+.perlite-field__value {
+  max-width: 60%;
+  overflow: hidden;
+  color: var(--text-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perlite-field.is-empty .perlite-field__value {
+  color: var(--text-faint);
+}
+
+.perlite-field.is-accent .perlite-field__value {
+  color: var(--text-accent);
+}
+
+/* ---- Quick add modal ---------------------------------------------------------------- */
+.perlite-quickadd {
+  width: min(640px, 92vw);
+}
+
+.perlite-quickadd .perlite-capture {
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-modifier-form-field);
+}
+
+.perlite-quickadd .perlite-capture:focus-within {
+  border-color: var(--background-modifier-border-focus);
+}
+
+.perlite-quickadd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1);
+  min-height: 28px;
+  margin: var(--size-4-3) 0;
+}
+
+.perlite-quickadd__hint {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+button.perlite-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 6px 0 8px;
+  border: none;
+  border-radius: var(--radius-s);
+  box-shadow: none;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+}
+
+button.perlite-chip svg {
+  width: 12px;
+  height: 12px;
+}
+
+.perlite-chip__x {
+  display: inline-flex;
+  opacity: 0.6;
+}
+
+.perlite-quickadd__props {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--size-4-2);
+}
+
+.perlite-quickadd__props .perlite-field {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.perlite-field__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.perlite-field__text .perlite-field__name {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-field__text .perlite-field__value {
+  max-width: none;
+}
+
+.perlite-quickadd__preview {
+  margin-top: var(--size-4-3);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+}
+
+.perlite-quickadd__appends {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-quickadd__dest {
+  color: var(--text-normal);
+  font-weight: var(--font-semibold);
+}
+
+.perlite-quickadd__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+}
+
+.perlite-quickadd__footer .prompt-instructions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-3);
+  padding: 0;
+}
+
+.perlite-quickadd__footer .modal-button-container {
+  margin-top: 0;
+}
+
+.perlite-quickadd__notice {
+  color: var(--color-green);
+  font-size: var(--font-ui-smaller);
+}
+
+.is-mobile .perlite-quickadd__footer .prompt-instructions {
+  display: none;
+}
+
+.perlite-suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.perlite-suggestion__icon {
+  display: inline-flex;
+  color: var(--text-faint);
+}
+
+.perlite-suggestion__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-suggestion__label {
+  flex: 1 1 auto;
+}
+
+.perlite-suggestion__meta {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* ---- Status bar, focus, motion ------------------------------------------------------- */
+.perlite-status-bar {
+  cursor: pointer;
+}
+
+button.perlite-segmented__option:focus-visible,
+button.perlite-chips__chip:focus-visible,
+button.perlite-icon-button:focus-visible,
+button.perlite-row__toggle:focus-visible,
+button.perlite-card__title:focus-visible,
+button.perlite-card__select:focus-visible,
+button.perlite-lenses__item:focus-visible,
+button.perlite-mini__day:focus-visible,
+.perlite-field:focus-visible,
+button.perlite-chip:focus-visible,
+.perlite-cal-chip:focus-visible,
+button.perlite-board__folded:focus-visible,
+.perlite-smart-list-row__menu:focus-visible,
+.perlite-criterion-row__remove:focus-visible,
+.perlite-empty-state__action:focus-visible,
+.perlite-view-header__actions button:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perlite-ring,
+  .perlite-card {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* Obsidian's `button:not(.clickable-icon):hover` paints every button; these stay flat. */
+button.perlite-row__toggle:hover,
+button.perlite-card__title:hover,
+button.perlite-card__select:hover,
+button.perlite-lenses__more:hover,
+button.perlite-cal-cell__more:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+button.perlite-chips__chip:hover,
+button.perlite-segmented__option:hover,
+button.perlite-mini__day:hover,
+button.perlite-board__folded:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+button.perlite-segmented__option[aria-checked="true"]:hover {
+  background-color: var(--background-primary);
+}
+
+button.perlite-mini__day.is-today:hover {
+  background-color: var(--interactive-accent);
+}
+
+.perlite-toast-host {
+  position: relative;
 }

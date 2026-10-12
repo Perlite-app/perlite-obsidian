@@ -27,11 +27,9 @@ export interface PerliteSettings {
   /** Vault-relative path Wave 2 chunk 13's quick-capture command appends to — created
    * (with any missing parent folder) on first capture if it doesn't exist yet. */
   readonly defaultInboxFile: string;
-  /** Whether `PerliteListView`'s optional "Completed" segment (tasks done today) is
-   * shown, toggled from that view's own header — not the native app's own concept
-   * (its `DefaultListView`/`ContentView` have no completed-tasks toggle to mirror), so
-   * persisted here rather than in `ParserConfiguration`. Defaults off, matching the
-   * existing "every incomplete task, segmented" framing until a viewer opts in. */
+  /** No longer read since the design pass — the Today lens always shows what was done
+   * today, greyed, and counts it in the progress ring. Kept so an older settings file
+   * still loads without a migration. */
   readonly showCompletedToday: boolean;
   /** Whether navigating between Perlite views (smart lists hub, a smart list's own
    * detail, a tapped tag's detail) reuses one tracked leaf — `PerlitePlugin.openPerliteView`
@@ -43,7 +41,34 @@ export interface PerliteSettings {
    * to look up their target leaf by view type alone, which silently spawned a duplicate
    * tab once the original leaf had been repointed to a deeper view. */
   readonly singleTabNavigation: boolean;
+  /** The design pass's main-tab state, kept across restarts: the selected lens
+   * (`query/lenses.ts`'s `lensKey`), List/Board/Calendar mode, and each mode's own
+   * options. Saved without a vault rescan (`PerlitePlugin.saveViewState`). */
+  readonly view: PerliteViewSettings;
 }
+
+export type PerliteMode = "list" | "board" | "calendar";
+export type BoardColumns = "status" | "priority" | "note";
+export type CalendarField = "due" | "scheduled" | "start";
+export type CalendarRange = "week" | "month";
+
+export interface PerliteViewSettings {
+  readonly lens: string;
+  readonly mode: PerliteMode;
+  readonly grouping: "note" | "due" | "priority";
+  readonly boardColumns: BoardColumns;
+  readonly calendarField: CalendarField;
+  readonly calendarRange: CalendarRange;
+}
+
+export const DEFAULT_VIEW_SETTINGS: PerliteViewSettings = {
+  lens: "today",
+  mode: "list",
+  grouping: "note",
+  boardColumns: "status",
+  calendarField: "due",
+  calendarRange: "week",
+};
 
 export const DEFAULT_SETTINGS: PerliteSettings = {
   globalFilterEnabled: true,
@@ -52,6 +77,7 @@ export const DEFAULT_SETTINGS: PerliteSettings = {
   defaultInboxFile: "Inbox.md",
   showCompletedToday: false,
   singleTabNavigation: true,
+  view: DEFAULT_VIEW_SETTINGS,
 };
 
 /** Builds the `ParserConfiguration` every parse call in this plugin uses, from the

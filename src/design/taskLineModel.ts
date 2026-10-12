@@ -3,7 +3,8 @@ import { dateValueCalendarDate } from "../model/DateValue.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
 import type { Priority } from "../model/Priority.js";
 import type { TaskStatusKind } from "../model/TaskStatus.js";
-import type { PerliteIconName } from "./icons.js";
+/** A Lucide icon name, as Obsidian's `setIcon` takes it. */
+type PerliteIconName = string;
 
 /**
  * The *pure* half of the chip translation layer: parsed fields → what should render,
