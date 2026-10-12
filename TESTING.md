@@ -162,6 +162,31 @@ plugin exception often shows there with nothing visible in the UI.
 - [ ] Switch the lens back to **List** and confirm the same smart list renders as an
       ordinary flat list again with no leftover kanban/calendar state.
 
+### Visual polish pass
+
+The design pass that added sticky view headers, section-header icons/count pills, tinted
+smart-list icon tiles, and real-`<button>` calendar cells was never run inside Obsidian
+either (same CI-can't-run-Obsidian gap as everything else in this file) — go through
+every view once with this in mind, not just once overall:
+
+- [ ] In **Settings → Appearance**, switch between a light and a dark theme (and, if
+      installed, a popular third-party theme like **Minimal**) and revisit the list view,
+      smart lists hub, a kanban-lens list, and a calendar-lens list in each — confirm no
+      Perlite surface looks like it hardcoded a background/text color the theme should
+      own (the only fixed hues should be priority/status/accent colors, never chrome).
+- [ ] Tab through each view with the keyboard only (no mouse) — confirm every button,
+      chip, and calendar day cell shows a visible focus ring, and that the sticky view
+      header's icon buttons are reachable.
+- [ ] Shrink the Perlite pane to a narrow sidebar width — confirm a long task description
+      still wraps cleanly and the sticky header/section-header count pills don't overflow
+      or clip.
+- [ ] Smart lists hub: confirm each list's icon tile is tinted with that list's own
+      configured color (not all the same gray), and that a hidden built-in reads as
+      muted without dimming its count/menu button.
+- [ ] Quick capture: type a phrase with a date/priority/tag and confirm the live preview
+      below the textbox renders as a real task row (icon, chips) rather than a plain
+      text line — clear the field and confirm the preview area collapses away.
+
 ### Mobile (isDesktopOnly is false — this matters)
 
 - [ ] If you have Obsidian mobile available (iOS/Android) pointed at a synced copy of

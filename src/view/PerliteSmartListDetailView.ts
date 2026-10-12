@@ -1,10 +1,14 @@
-import { ItemView, WorkspaceLeaf, type ViewStateResult } from "obsidian";
+import { ItemView, Notice, WorkspaceLeaf, type ViewStateResult } from "obsidian";
+import { renderEmptyState } from "../design/renderEmptyState.js";
+import { renderSectionHeader } from "../design/renderSectionHeader.js";
 import { group, type TaskGroup } from "../query/GroupingEngine.js";
 import { mergeSmartListCatalog } from "../query/smartListCatalog.js";
 import * as SmartListEngine from "../query/SmartListEngine.js";
+import { withUpdatedList } from "../query/smartListMutations.js";
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
 import { scanVaultTasks, type LocatedTask } from "../vaultTaskScan.js";
+import { SmartListEditorModal } from "../SmartListEditorModal.js";
 import { renderCalendarBoard, type CalendarBoardState } from "./CalendarBoard.js";
 import { renderKanbanBoard } from "./KanbanBoard.js";
 import { ListKeyboardNav, type KeyboardNavRow } from "./ListKeyboardNav.js";
@@ -77,11 +81,31 @@ export class PerliteSmartListDetailView extends ItemView {
    * chrome once, whichever runs first. */
   private ensureChrome(): void {
     if (this.contentAreaEl !== null) return;
+
+    // Both actions read `this.smartListId`/`this.plugin.smartLists` at click time, not
+    // at `ensureChrome`'s one-time call time — this same leaf can be re-pointed at a
+    // different smart list later via `setState`, and `ensureChrome`'s own idempotency
+    // guard above means this is the only place these buttons ever get created.
+    this.addAction("arrow-left", "Back to smart lists", () => {
+      void this.plugin.activateSmartListsView();
+    });
+    this.addAction("pencil", "Edit this list", () => {
+      const list = mergeSmartListCatalog(this.plugin.smartLists).find((l) => l.id === this.smartListId);
+      if (list === undefined) return;
+      if (list.isBuiltIn) {
+        new Notice('Built-in lists can\'t be edited — use "Hide" from the Smart Lists hub instead.');
+        return;
+      }
+      new SmartListEditorModal(this.app, list, (updated) => {
+        void this.plugin.mutateSmartLists((stored) => withUpdatedList(stored, updated));
+      }).open();
+    });
+
     const root = this.containerEl.children[1] as HTMLElement;
     root.empty();
     root.addClass("perlite-list-view");
     const liveRegion = root.createDiv({ cls: "perlite-visually-hidden", attr: { "aria-live": "polite" } });
-    this.contentAreaEl = root.createDiv();
+    this.contentAreaEl = root.createDiv({ cls: "perlite-detail-view-content" });
     this.keyboardNav.attach(this.contentAreaEl, liveRegion);
   }
 
@@ -93,7 +117,7 @@ export class PerliteSmartListDetailView extends ItemView {
 
     const list = mergeSmartListCatalog(this.plugin.smartLists).find((l) => l.id === this.smartListId);
     if (list === undefined) {
-      container.createDiv({ cls: "perlite-empty-state", text: "This smart list no longer exists." });
+      renderEmptyState(container, { icon: "circle-x", title: "This smart list no longer exists." });
       this.keyboardNav.setRows([]);
       return;
     }
@@ -108,16 +132,16 @@ export class PerliteSmartListDetailView extends ItemView {
       todayCalendarDate(),
     );
     const tasks = results[0]?.tasks ?? [];
-
-    if (tasks.length === 0) {
-      container.createDiv({ cls: "perlite-empty-state", text: "No tasks in this list." });
-      this.keyboardNav.setRows([]);
-      return;
-    }
-
     const findEntry = (task: (typeof tasks)[number]): LocatedTask | undefined => byTask.get(task);
     const listLocated: LocatedTask[] = tasks.map(findEntry).filter((entry): entry is LocatedTask => entry !== undefined);
 
+    // Kanban/calendar must render their frame (columns / the month grid) even with zero
+    // matching tasks — a status/priority column, or a day cell, is still a valid drop
+    // target with nothing in it, same reasoning as `KanbanBoard.expandColumns`'s own doc
+    // comment. This check has to come before the "no tasks" early-return just below, not
+    // after it: an empty kanban/calendar list used to fall into that return and render
+    // the flat-list empty-state text instead of its board, making a genuinely working
+    // kanban/calendar list indistinguishable from a broken one.
     if (list.lens === "kanban") {
       renderKanbanBoard(container, {
         app: this.app,
@@ -155,6 +179,14 @@ export class PerliteSmartListDetailView extends ItemView {
       return;
     }
 
+    // The flat "list" lens, unlike kanban/calendar above, has no frame worth showing
+    // empty — just the message.
+    if (tasks.length === 0) {
+      renderEmptyState(container, { icon: list.icon, title: "No tasks in this list." });
+      this.keyboardNav.setRows([]);
+      return;
+    }
+
     const navRows: KeyboardNavRow[] = [];
 
     if (list.grouping === null) {
@@ -170,7 +202,7 @@ export class PerliteSmartListDetailView extends ItemView {
     const groups: TaskGroup[] = group(tasks, list.grouping);
     for (const taskGroup of groups) {
       const section = container.createDiv({ cls: "perlite-segment" });
-      section.createEl("h6", { cls: "perlite-segment__title", text: `${taskGroup.key} (${taskGroup.tasks.length})` });
+      renderSectionHeader(section, { icon: list.icon, title: taskGroup.key, count: taskGroup.tasks.length });
       const listEl = section.createDiv({ cls: "perlite-segment__list" });
       for (const task of taskGroup.tasks) {
         const entry = findEntry(task);

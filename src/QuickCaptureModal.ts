@@ -1,7 +1,6 @@
 import { App, Modal, Notice, Setting } from "obsidian";
 import { buildQuickAddTaskLine, parseQuickAdd } from "./capture/QuickAddParser.js";
-import { calendarDateToISOString } from "./model/CalendarDate.js";
-import { clockTimeToISOString } from "./model/ClockTime.js";
+import { renderTaskLine } from "./design/renderTaskLine.js";
 import { parserConfiguration } from "./settings.js";
 import { todayCalendarDate } from "./support/today.js";
 import { appendQuickAddTask } from "./write/appendQuickAddTask.js";
@@ -30,11 +29,11 @@ export class QuickCaptureModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h3", { text: "Quick capture" });
+    this.setTitle("Quick capture");
 
     let inputEl: HTMLTextAreaElement | null = null;
     new Setting(contentEl).addTextArea((textArea) => {
-      textArea.inputEl.rows = 2;
+      textArea.inputEl.rows = 3;
       textArea.inputEl.addClass("perlite-quickadd-input");
       textArea.setPlaceholder("Buy milk tomorrow !high #errands");
       textArea.onChange((value) => {
@@ -57,21 +56,27 @@ export class QuickCaptureModal extends Modal {
     window.setTimeout(() => inputEl?.focus(), 0);
   }
 
+  /** Renders the *real* `renderTaskLine` row for whatever `buildQuickAddTaskLine` would
+   * actually write — so what's previewed here is exactly the row you'll get, not a
+   * separate hand-summarised string that could drift from the real parse/serialize path.
+   * Both calls are pure/synchronous (no vault access — see `buildQuickAddTaskLine`'s own
+   * doc comment), so this is safe to run on every keystroke. */
   private updatePreview(): void {
     const el = this.previewEl;
     if (el === null) return;
     el.empty();
     if (this.text.trim().length === 0) return;
 
-    const result = parseQuickAdd(this.text);
-    const parts: string[] = [];
-    if (result.dueDate !== null) parts.push(`📅 ${calendarDateToISOString(result.dueDate)}`);
-    if (result.reminder !== null && result.reminder.time !== null) {
-      parts.push(`⏰ ${clockTimeToISOString(result.reminder.time)}`);
+    try {
+      const result = parseQuickAdd(this.text);
+      const configuration = parserConfiguration(this.plugin.settings);
+      const task = buildQuickAddTaskLine(result, todayCalendarDate(), configuration);
+      el.appendChild(renderTaskLine({ task }));
+    } catch {
+      // An in-progress phrase (e.g. a lone "!" before a priority letter follows) can
+      // fail to parse mid-keystroke — leave the preview empty rather than show a
+      // half-built or stale row.
     }
-    if (result.priority !== null) parts.push(`Priority: ${result.priority}`);
-    if (parts.length === 0) return;
-    el.setText(parts.join("   "));
   }
 
   private async submit(): Promise<void> {

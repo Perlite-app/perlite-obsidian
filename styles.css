@@ -35,6 +35,27 @@
   --perlite-recurrence-highlight: #34a853;
   --perlite-tag: #4c6ef5;
   --perlite-tag-rgb: 76, 110, 245;
+
+  /* User-selectable smart-list accent palette + the built-in smart lists' own fixed
+   * accents (`accentToken.ts`'s `ACCENT_TOKEN_VAR` map resolves a `SmartList.accentToken`
+   * to one of these) — value copy of `AccentToken.swift`'s `"accent.*"`/`"smartlist.*"`
+   * cases, same as every other token above. */
+  --perlite-accent-red: #e5484d;
+  --perlite-accent-orange: #f2762c;
+  --perlite-accent-yellow: #e6a817;
+  --perlite-accent-green: #34a853;
+  --perlite-accent-blue: #3b82f6;
+  --perlite-accent-purple: #8b5cf6;
+  --perlite-accent-pink: #e14f87;
+  --perlite-accent-gray: #8e8e93;
+
+  --perlite-smartlist-today: #3b82f6;
+  --perlite-smartlist-overdue: #e5484d;
+  --perlite-smartlist-upcoming: #f2762c;
+  --perlite-smartlist-anytime: #8e8e93;
+  --perlite-smartlist-flagged: #f2762c;
+  --perlite-smartlist-recentlyCompleted: #34a853;
+  --perlite-smartlist-blocking: #8b5cf6;
 }
 
 .theme-dark {
@@ -51,6 +72,23 @@
   --perlite-recurrence-highlight: #58c976;
   --perlite-tag: #7c93ff;
   --perlite-tag-rgb: 124, 147, 255;
+
+  --perlite-accent-red: #ff6a65;
+  --perlite-accent-orange: #ff9d5c;
+  --perlite-accent-yellow: #f5c451;
+  --perlite-accent-green: #58c976;
+  --perlite-accent-blue: #6fa8ff;
+  --perlite-accent-purple: #ac8cff;
+  --perlite-accent-pink: #ff83b0;
+  --perlite-accent-gray: #a6a6ac;
+
+  --perlite-smartlist-today: #6fa8ff;
+  --perlite-smartlist-overdue: #ff6a65;
+  --perlite-smartlist-upcoming: #ff9d5c;
+  --perlite-smartlist-anytime: #a6a6ac;
+  --perlite-smartlist-flagged: #ff9d5c;
+  --perlite-smartlist-recentlyCompleted: #58c976;
+  --perlite-smartlist-blocking: #ac8cff;
 }
 
 /* ---- Spacing -------------------------------------------------------------------------
@@ -67,6 +105,57 @@
   --perlite-spacing-xl: var(--size-4-6); /* 24px */
 }
 
+/* ---- Semantic section accents ---------------------------------------------------------
+ * A small, fixed set of "what kind of section is this" colours — distinct from the
+ * user-selectable smart-list palette above, which is per-*list*, not per-*segment*. Reuse
+ * the same underlying tokens rather than inventing new hues: overdue reads as the same
+ * red as a highest-priority chip, today as Obsidian's own accent colour (so it always
+ * matches the user's theme, not a fixed hue), upcoming as the same orange as a high-
+ * priority chip. */
+.perlite-accent-overdue {
+  color: var(--perlite-priority-highest);
+}
+.perlite-accent-today {
+  color: var(--interactive-accent);
+}
+.perlite-accent-upcoming {
+  color: var(--perlite-priority-high);
+}
+.perlite-accent-done {
+  color: var(--perlite-status-done);
+}
+.perlite-tag-accent {
+  color: var(--perlite-tag);
+}
+
+/* ---- Accessibility --------------------------------------------------------------------
+ * A visible focus ring on every keyboard-reachable Perlite control — previously only
+ * `ListKeyboardNav`'s own row selection had one, so tabbing to anything else (a chip, a
+ * header action, a calendar cell) left no visible indicator at all. */
+.perlite-tag-chip:focus-visible,
+.perlite-task-row__status--interactive:focus-visible,
+.perlite-smart-list-row__menu:focus-visible,
+.perlite-criterion-row__remove:focus-visible,
+.perlite-empty-state__action:focus-visible,
+.perlite-view-header__actions button:focus-visible,
+.perlite-calendar-nav:focus-visible,
+.perlite-calendar-cell:focus-visible,
+.perlite-drag-handle:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perlite-task-row,
+  .perlite-tag-chip,
+  .perlite-chip--due-flash,
+  .perlite-kanban-card,
+  .perlite-calendar-nav,
+  .perlite-drag-handle {
+    transition-duration: 0.01ms;
+  }
+}
+
 /* ---- Task row -------------------------------------------------------------------------
  * One task: status icon, description (with inline tag chips), source context, and a
  * wrapping row of field chips (due/priority/recurrence/subtasks) — the single row shape
@@ -77,7 +166,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--perlite-spacing-sm);
-  padding: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
+  padding: var(--perlite-spacing-sm);
   border-radius: var(--radius-s);
   transition: background-color 100ms ease-out;
 }
@@ -86,23 +175,33 @@
   background-color: var(--background-modifier-hover);
 }
 
+/* Hairline rhythm between rows in a flat list/detail segment — scoped to
+ * `.perlite-segment__list` specifically so kanban cards and calendar agenda rows (each
+ * wrapped in their own container, not a direct child here) stay unaffected. */
+.perlite-segment__list > .perlite-list-view__row + .perlite-list-view__row {
+  border-top: 1px solid var(--background-modifier-border);
+}
+
 .perlite-task-row__status {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   margin-top: 1px;
   padding: 0;
+  border-radius: 50%;
   background: none;
   border: none;
   box-shadow: none;
   color: var(--perlite-status-icon-color, var(--text-normal));
   cursor: pointer;
+  transition: background-color 100ms ease-out, color 100ms ease-out;
 }
 
-.perlite-task-row__status:hover {
+.perlite-task-row__status--interactive:hover {
+  background-color: var(--background-modifier-hover);
   color: var(--interactive-accent);
 }
 
@@ -222,11 +321,22 @@
   color: var(--text-muted);
 }
 
+/* A tinted pill, same family as `.perlite-tag-chip` above — `background-color` is
+ * declared twice: the first (a flat theme colour) is the whole rule for any renderer
+ * without `color-mix()` support, the second silently overrides it everywhere else. Tint
+ * derives from `currentColor`, so a plain due/recurrence chip (inheriting
+ * `.perlite-chip-row`'s muted colour) gets a neutral pill and a coloured priority chip
+ * (via the modifiers below) gets a matching tinted one, with no extra rule needed per
+ * colour. */
 .perlite-chip {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
   white-space: nowrap;
+  background-color: var(--background-modifier-hover);
+  background-color: color-mix(in srgb, currentColor 14%, transparent);
 }
 
 .perlite-chip svg {
@@ -284,17 +394,95 @@
   overflow-y: auto;
 }
 
-.perlite-segment + .perlite-segment {
-  margin-top: var(--perlite-spacing-lg);
+/* ---- View header (sticky title bar + action cluster, `renderViewHeader.ts`) ---------- */
+.perlite-view-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--perlite-spacing-sm);
+  /* Bleeds to the full width of `.perlite-list-view`'s own padding, so the sticky bar
+   * reads as a real toolbar rather than an indented block once content scrolls under it. */
+  margin: calc(var(--perlite-spacing-md) * -1) calc(var(--perlite-spacing-md) * -1) var(--perlite-spacing-md);
+  padding: var(--perlite-spacing-sm) var(--perlite-spacing-md);
+  background-color: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.perlite-segment__title {
+.perlite-view-header__title {
+  margin: 0;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+  color: var(--text-normal);
+}
+
+.perlite-view-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-xs);
+}
+
+.perlite-view-header__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.perlite-view-header__primary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+}
+.perlite-view-header__primary-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---- Section header (icon + title + count pill, `renderSectionHeader.ts`) ------------ */
+.perlite-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--perlite-spacing-xs);
   margin: 0 0 var(--perlite-spacing-xs) 0;
+}
+
+.perlite-section-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+.perlite-section-header__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.perlite-section-header__title {
+  margin: 0;
   font-size: var(--font-ui-smaller);
   font-weight: var(--font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--text-muted);
+}
+
+.perlite-section-header__count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.perlite-segment + .perlite-segment {
+  margin-top: var(--perlite-spacing-lg);
 }
 
 .perlite-segment__list {
@@ -315,10 +503,43 @@
   font-size: var(--font-ui-smaller);
 }
 
+/* ---- Empty state (icon + title + optional hint/action, `renderEmptyState.ts`) -------- */
 .perlite-empty-state {
-  padding: var(--perlite-spacing-xl) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--perlite-spacing-xs);
+  padding: var(--perlite-spacing-xl) var(--perlite-spacing-md);
   text-align: center;
   color: var(--text-muted);
+}
+
+.perlite-empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-faint);
+}
+.perlite-empty-state__icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.perlite-empty-state__title {
+  font-size: var(--font-ui-medium);
+  color: var(--text-muted);
+}
+
+.perlite-empty-state__hint {
+  max-width: 28em;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+}
+
+.perlite-empty-state__action {
+  margin-top: var(--perlite-spacing-xs);
 }
 
 /* ---- Smart list editor modal (Wave 2 chunk 10) --------------------------------------- */
@@ -345,11 +566,15 @@
   font-size: var(--font-ui-smaller);
 }
 
+/* A grouped card, not loose rows — a border around the whole set plus a hairline between
+ * rows reads as "one filter", the same way a bracketed expression would. */
 .perlite-criteria-rows {
   display: flex;
   flex-direction: column;
-  gap: var(--perlite-spacing-xs);
   margin-bottom: var(--perlite-spacing-sm);
+  padding: 0 var(--perlite-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
 }
 
 .perlite-criterion-row {
@@ -357,6 +582,9 @@
   align-items: center;
   gap: var(--perlite-spacing-sm);
   padding: var(--perlite-spacing-xs) 0;
+}
+.perlite-criterion-row + .perlite-criterion-row {
+  border-top: 1px solid var(--background-modifier-border);
 }
 
 .perlite-criterion-row__not {
@@ -376,17 +604,25 @@
 }
 
 .perlite-criterion-row__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   background: none;
   border: none;
   box-shadow: none;
+  border-radius: var(--radius-s);
   color: var(--text-muted);
   cursor: pointer;
-  font-size: var(--font-ui-medium);
-  line-height: 1;
-  padding: 0 var(--perlite-spacing-xs);
+  padding: var(--perlite-spacing-xs);
+}
+.perlite-criterion-row__remove svg {
+  width: 14px;
+  height: 14px;
 }
 .perlite-criterion-row__remove:hover {
   color: var(--text-error);
+  background-color: var(--background-modifier-hover);
 }
 
 /* ---- Smart lists hub + detail view (Wave 2 chunk 10) ---------------------------------- */
@@ -401,43 +637,67 @@
 .perlite-smart-list-row:hover {
   background-color: var(--background-modifier-hover);
 }
+/* A tinted, rounded icon tile coloured from the list's own `accentToken` (set inline as
+ * `--perlite-icon-tile-color` by `PerliteSmartListsView.renderRow` via `accentToken.ts`) —
+ * same declare-flat-then-override-with-color-mix progressive-enhancement pattern as
+ * `.perlite-chip` above. */
 .perlite-smart-list-row__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
+  border-radius: var(--radius-m);
+  color: var(--perlite-icon-tile-color, var(--text-muted));
+  background-color: var(--background-modifier-hover);
+  background-color: color-mix(in srgb, var(--perlite-icon-tile-color, var(--text-muted)) 16%, transparent);
 }
 .perlite-smart-list-row__icon svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 .perlite-smart-list-row__name {
   flex: 1;
   color: var(--text-normal);
 }
 .perlite-smart-list-row__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: var(--background-modifier-border);
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
 }
-.perlite-smart-list-row__hidden {
-  opacity: 0.5;
+/* Hidden: a muted (un-tinted) icon tile + muted name, not a blanket row opacity — the
+ * count/menu stay fully legible instead of fading along with everything else. */
+.perlite-smart-list-row__hidden .perlite-smart-list-row__name {
+  color: var(--text-muted);
 }
-
-.perlite-smart-lists-header {
+.perlite-smart-list-row__menu {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--perlite-spacing-xs);
+  opacity: 0;
+}
+.perlite-smart-list-row:hover .perlite-smart-list-row__menu,
+.perlite-smart-list-row__menu:focus-visible {
+  opacity: 1;
+}
+.perlite-smart-list-row__menu:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
 }
 
-.perlite-smart-lists-section-title {
-  margin: var(--perlite-spacing-md) 0 var(--perlite-spacing-xs) 0;
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--text-muted);
+.perlite-smart-lists-hidden-heading {
+  margin-top: var(--perlite-spacing-md);
 }
 
 /* ---- Keyboard-first triage (Wave 2 chunk 11) ------------------------------------------ */
@@ -453,11 +713,13 @@
   border: 0;
 }
 
+/* An accent-coloured left bar (an inset box-shadow, so it doesn't shift row content the
+ * way a real border would) + a tinted background, rather than a hard inset outline —
+ * reads as "current row" without boxing it in. */
 .perlite-row--selected {
-  outline: 2px solid var(--interactive-accent);
-  outline-offset: -2px;
   border-radius: var(--radius-s);
   background-color: var(--background-modifier-hover);
+  box-shadow: inset 3px 0 0 0 var(--interactive-accent);
 }
 
 .perlite-row-expansion {
@@ -481,11 +743,22 @@
   resize: vertical;
 }
 
+/* Renders the *real* `renderTaskLine` row for whatever was just parsed — what's
+ * previewed here is exactly the row you'll get, not a separate emoji-summary string. */
 .perlite-quickadd-preview {
-  min-height: 1.4em;
   margin: var(--perlite-spacing-xs) 0 var(--perlite-spacing-sm) 0;
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+}
+.perlite-quickadd-preview:empty {
+  display: none;
+}
+.perlite-quickadd-preview .perlite-task-row {
+  padding: var(--perlite-spacing-xs) var(--perlite-spacing-sm);
+  pointer-events: none;
+}
+.perlite-quickadd-preview .perlite-task-row:hover {
+  background-color: transparent;
 }
 
 /* ---- Drag-and-drop (Wave 3, dragController.ts — shared by kanban + calendar) ---------- */
@@ -497,6 +770,7 @@
   cursor: grab;
   color: var(--text-faint);
   touch-action: none; /* let Pointer Events drive the drag instead of native scroll/pan */
+  transition: opacity 100ms ease-out, color 100ms ease-out;
 }
 .perlite-drag-handle:hover {
   color: var(--text-muted);
@@ -535,16 +809,22 @@
   flex: 0 0 260px;
   display: flex;
   flex-direction: column;
-  background-color: var(--background-secondary);
+  max-height: 100%;
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
-  padding: var(--perlite-spacing-sm);
+  background-color: var(--background-secondary);
 }
 
-.perlite-kanban-column__title {
-  margin: 0 0 var(--perlite-spacing-sm) var(--perlite-spacing-xs);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-  color: var(--text-muted);
+.perlite-kanban-column__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--perlite-spacing-sm) var(--perlite-spacing-sm) 0;
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+.perlite-kanban-column__header .perlite-section-header {
+  margin-bottom: var(--perlite-spacing-sm);
 }
 
 .perlite-kanban-column__body {
@@ -552,6 +832,8 @@
   flex-direction: column;
   gap: var(--perlite-spacing-xs);
   min-height: 24px; /* keeps an empty column a real drop target, not a zero-height sliver */
+  padding: 0 var(--perlite-spacing-sm) var(--perlite-spacing-sm);
+  overflow-y: auto;
 }
 
 .perlite-kanban-card {
@@ -559,13 +841,29 @@
   align-items: flex-start;
   gap: var(--perlite-spacing-xs);
   background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
   padding: var(--perlite-spacing-xs);
+  transition: box-shadow 100ms ease-out, border-color 100ms ease-out;
+}
+.perlite-kanban-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: var(--shadow-s);
 }
 
 .perlite-kanban-card .perlite-task-row {
   flex: 1;
   min-width: 0;
+}
+
+/* The handle only fades in on hover/focus — a permanently visible grip on every card
+ * reads as clutter on a board where most columns aren't even draggable. */
+.perlite-kanban-card .perlite-drag-handle {
+  opacity: 0;
+}
+.perlite-kanban-card:hover .perlite-drag-handle,
+.perlite-kanban-card:focus-within .perlite-drag-handle {
+  opacity: 1;
 }
 
 /* ---- Calendar lens (Wave 3) -------------------------------------------------------------- */
@@ -589,6 +887,7 @@
   background: transparent;
   border: none;
   box-shadow: none;
+  border-radius: var(--radius-s);
   cursor: pointer;
   color: var(--text-muted);
   padding: var(--perlite-spacing-xs);
@@ -598,7 +897,14 @@
   background-color: var(--background-modifier-hover);
 }
 .perlite-calendar-nav--today {
+  padding: 2px 10px;
+  border: 1px solid var(--background-modifier-border);
   font-size: var(--font-ui-smaller);
+}
+.perlite-calendar-nav--today:hover {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  background-color: transparent;
 }
 
 .perlite-calendar-weekdays,
@@ -614,7 +920,16 @@
   padding-bottom: var(--perlite-spacing-xs);
 }
 
+/* A real `<button>` (keyboard-focusable, unlike the click-handled `<div>` this used to
+ * be) — the first six declarations strip the browser's own button chrome so it still
+ * reads as a plain grid cell, not a form control. */
 .perlite-calendar-cell {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -639,6 +954,7 @@
 }
 .perlite-calendar-cell--today .perlite-calendar-cell__day {
   background-color: rgba(var(--interactive-accent-rgb), 0.15);
+  color: var(--interactive-accent);
   font-weight: var(--font-semibold);
 }
 .perlite-calendar-cell--selected .perlite-calendar-cell__day {

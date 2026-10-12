@@ -1,4 +1,4 @@
-import { App, DropdownComponent, Modal, Setting, setIcon } from "obsidian";
+import { App, DropdownComponent, Modal, Setting, setIcon, setTooltip } from "obsidian";
 import { calendarDateToISOString, parseCalendarDate } from "./model/CalendarDate.js";
 import type { Priority } from "./model/Priority.js";
 import { PRIORITY_VALUES } from "./model/Priority.js";
@@ -138,7 +138,7 @@ export class SmartListEditorModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h2", { text: this.existing === null ? "New smart list" : `Edit "${this.existing.name}"` });
+    this.setTitle(this.existing === null ? "New smart list" : `Edit "${this.existing.name}"`);
 
     new Setting(contentEl).setName("Name").addText((text) =>
       text.setValue(this.name).onChange((value) => {
@@ -166,7 +166,7 @@ export class SmartListEditorModal extends Modal {
       });
     });
 
-    contentEl.createEl("h3", { text: "Match" });
+    new Setting(contentEl).setName("Match").setHeading();
 
     if (this.unrepresentable) {
       contentEl.createDiv({
@@ -174,7 +174,7 @@ export class SmartListEditorModal extends Modal {
         text: "This list's filter is more complex than this editor supports (nested groups or mixed AND/OR). It will be shown here read-only — saving other fields below leaves the filter untouched.",
       });
     } else {
-      new Setting(contentEl).setName("Match").addDropdown((dropdown) => {
+      new Setting(contentEl).setName("Match mode").addDropdown((dropdown) => {
         dropdown.addOption("all", "All of the following");
         dropdown.addOption("any", "Any of the following");
         dropdown.setValue(this.matchMode).onChange((value) => {
@@ -186,15 +186,18 @@ export class SmartListEditorModal extends Modal {
       this.renderRows();
 
       new Setting(contentEl).addButton((button) =>
-        button.setButtonText("+ Add condition").onClick(() => {
-          this.rows.push(createCriterionDraft());
-          this.renderRows();
-          this.refreshSaveEnabled();
-        }),
+        button
+          .setButtonText("Add condition")
+          .setIcon("plus")
+          .onClick(() => {
+            this.rows.push(createCriterionDraft());
+            this.renderRows();
+            this.refreshSaveEnabled();
+          }),
       );
     }
 
-    contentEl.createEl("h3", { text: "Display" });
+    new Setting(contentEl).setName("Display").setHeading();
 
     new Setting(contentEl).setName("View as").addDropdown((dropdown) => {
       for (const lens of SMART_LIST_LENS_VALUES) dropdown.addOption(lens, LENS_LABEL[lens]);
@@ -312,7 +315,7 @@ export class SmartListEditorModal extends Modal {
     });
     notLabel.appendText(" Not");
 
-    const fieldSelect = rowEl.createEl("select");
+    const fieldSelect = rowEl.createEl("select", { cls: "dropdown" });
     for (const field of CRITERION_FIELDS) {
       const option = fieldSelect.createEl("option", { value: field, text: CRITERION_FIELD_LABEL[field] });
       if (field === draft.field) option.selected = true;
@@ -324,7 +327,9 @@ export class SmartListEditorModal extends Modal {
     });
     renderValueControl(valueContainer, draft);
 
-    const removeButton = rowEl.createEl("button", { text: "×", cls: "perlite-criterion-row__remove" });
+    const removeButton = rowEl.createEl("button", { cls: "perlite-criterion-row__remove", attr: { "aria-label": "Remove condition" } });
+    setTooltip(removeButton, "Remove condition");
+    setIcon(removeButton, "x");
     removeButton.addEventListener("click", () => {
       this.rows = this.rows.filter((r) => r.id !== draft.id);
       this.renderRows();
@@ -383,7 +388,7 @@ function renderValueControl(container: HTMLElement, draft: CriterionDraft): void
   container.empty();
   switch (draft.field) {
     case "status": {
-      const select = container.createEl("select");
+      const select = container.createEl("select", { cls: "dropdown" });
       for (const option of STATUS_KIND_OPTIONS) {
         const el = select.createEl("option", { value: option.value, text: option.label });
         if (option.value === draft.statusKind) el.selected = true;
@@ -394,7 +399,7 @@ function renderValueControl(container: HTMLElement, draft: CriterionDraft): void
       return;
     }
     case "priority": {
-      const select = container.createEl("select");
+      const select = container.createEl("select", { cls: "dropdown" });
       for (const value of PRIORITY_VALUES) {
         const el = select.createEl("option", { value, text: PRIORITY_LABEL[value] });
         if (value === draft.priority) el.selected = true;
@@ -422,7 +427,7 @@ function renderValueControl(container: HTMLElement, draft: CriterionDraft): void
       return;
     }
     case "hasDescription": {
-      const select = container.createEl("select");
+      const select = container.createEl("select", { cls: "dropdown" });
       const yes = select.createEl("option", { value: "true", text: "Yes" });
       const no = select.createEl("option", { value: "false", text: "No" });
       (draft.boolValue ? yes : no).selected = true;
@@ -435,7 +440,7 @@ function renderValueControl(container: HTMLElement, draft: CriterionDraft): void
 }
 
 function renderDateRangeControl(container: HTMLElement, draft: CriterionDraft): void {
-  const kindSelect = container.createEl("select");
+  const kindSelect = container.createEl("select", { cls: "dropdown" });
   for (const kind of DATE_RANGE_KINDS) {
     const el = kindSelect.createEl("option", { value: kind, text: DATE_RANGE_KIND_LABEL[kind] });
     if (kind === draft.dateRangeKind) el.selected = true;
@@ -477,7 +482,7 @@ function renderDateRangeOperands(container: HTMLElement, draft: CriterionDraft):
       return;
     }
     case "relative": {
-      const select = container.createEl("select");
+      const select = container.createEl("select", { cls: "dropdown" });
       for (const value of RELATIVE_DATE_RANGES) {
         const el = select.createEl("option", { value, text: RELATIVE_DATE_RANGE_LABEL[value] });
         if (value === draft.relativeRange) el.selected = true;

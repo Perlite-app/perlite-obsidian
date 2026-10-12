@@ -17,6 +17,8 @@ export class PerliteSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
+    new Setting(containerEl).setName("Parsing").setHeading();
+
     new Setting(containerEl)
       .setName("Global filter")
       .setDesc(
@@ -59,6 +61,23 @@ export class PerliteSettingTab extends PluginSettingTab {
             await this.plugin.updateSettings({ excludedFolders: folders });
           });
       });
+
+    new Setting(containerEl).setName("Navigation").setHeading();
+
+    new Setting(containerEl)
+      .setName("Reuse one tab for navigation")
+      .setDesc(
+        "When on, opening the smart lists hub, a smart list, or a tapped tag reuses the " +
+          "same Perlite tab — each is pushed over the standard task list, with a back " +
+          "button to return to it. When off, each one opens (or reveals) its own tab.",
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.singleTabNavigation).onChange(async (value) => {
+          await this.plugin.updateSettings({ singleTabNavigation: value });
+        }),
+      );
+
+    new Setting(containerEl).setName("Capture").setHeading();
 
     new Setting(containerEl)
       .setName("Default inbox file")

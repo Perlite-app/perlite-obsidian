@@ -72,6 +72,9 @@ export function renderInteractiveTaskRow(
         await onAfterWrite();
       })();
     },
+    onTagClick: (tagRaw) => {
+      void plugin.activateTagDetailView(tagRaw);
+    },
   });
   row.addClass("perlite-list-view__row");
   // Clicking the status icon, a tag chip, or (Wave 3) a kanban/calendar drag handle must

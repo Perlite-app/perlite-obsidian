@@ -1,6 +1,8 @@
-import type { App, HoverParent, TFile } from "obsidian";
+import { setTooltip, type App, type HoverParent, type TFile } from "obsidian";
 import { attachDragHandle } from "../design/dragController.js";
 import { renderIcon } from "../design/icons.js";
+import { renderEmptyState } from "../design/renderEmptyState.js";
+import { renderSectionHeader } from "../design/renderSectionHeader.js";
 import { calendarDateToISOString, compareCalendarDates, parseCalendarDate, type CalendarDate } from "../model/CalendarDate.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
 import { PRIORITY_VALUES, type Priority } from "../model/Priority.js";
@@ -111,15 +113,15 @@ function renderInner(
   if (isToday) {
     const overdueTasks = sort(overdue(tasks, today), sorting);
     if (overdueTasks.length > 0) {
-      renderAgendaSection(agendaEl, `Overdue (${overdueTasks.length})`, overdueTasks, byTask, options, navRows);
+      renderAgendaSection(agendaEl, "Overdue", "alert-triangle", overdueTasks, byTask, options, navRows);
     }
   }
 
   const selectedDayTasks = sort(dayIndex.get(calendarDateToISOString(state.selectedDate)) ?? [], sorting);
-  renderAgendaSection(agendaEl, selectedDayTitle(state.selectedDate, today), selectedDayTasks, byTask, options, navRows);
+  renderAgendaSection(agendaEl, selectedDayTitle(state.selectedDate, today), isToday ? "sun" : "calendar", selectedDayTasks, byTask, options, navRows);
 
   if (navRows.length === 0) {
-    agendaEl.createDiv({ cls: "perlite-empty-state", text: "Nothing on this day." });
+    renderEmptyState(agendaEl, { icon: "calendar", title: "Nothing on this day." });
   }
 
   return navRows;
@@ -128,16 +130,23 @@ function renderInner(
 function renderHeader(rootEl: HTMLElement, state: CalendarBoardState, onNavigate: (next: CalendarBoardState) => void): void {
   const headerEl = rootEl.createDiv({ cls: "perlite-calendar-header" });
   const prevBtn = headerEl.createEl("button", { cls: "perlite-calendar-nav", attr: { "aria-label": "Previous month" } });
+  setTooltip(prevBtn, "Previous month");
   renderIcon(prevBtn, "chevron-left");
   prevBtn.addEventListener("click", () => onNavigate({ visibleMonth: addMonths(state.visibleMonth, -1), selectedDate: state.selectedDate }));
 
   headerEl.createEl("h6", { cls: "perlite-calendar-header__title", text: monthTitle(state.visibleMonth) });
 
   const nextBtn = headerEl.createEl("button", { cls: "perlite-calendar-nav", attr: { "aria-label": "Next month" } });
+  setTooltip(nextBtn, "Next month");
   renderIcon(nextBtn, "chevron-right");
   nextBtn.addEventListener("click", () => onNavigate({ visibleMonth: addMonths(state.visibleMonth, 1), selectedDate: state.selectedDate }));
 
-  const todayBtn = headerEl.createEl("button", { cls: "perlite-calendar-nav perlite-calendar-nav--today", text: "Today" });
+  const todayBtn = headerEl.createEl("button", {
+    cls: "perlite-calendar-nav perlite-calendar-nav--today",
+    text: "Today",
+    attr: { "aria-label": "Jump to today" },
+  });
+  setTooltip(todayBtn, "Jump to today");
   todayBtn.addEventListener("click", () => {
     const today = todayCalendarDate();
     onNavigate({ visibleMonth: { ...today, day: 1 }, selectedDate: today });
@@ -161,7 +170,7 @@ function renderGrid(
 ): void {
   const gridEl = rootEl.createDiv({ cls: "perlite-calendar-grid" });
   for (const date of gridDates(state.visibleMonth, firstWeekday)) {
-    const cellEl = gridEl.createDiv({ cls: "perlite-calendar-cell" });
+    const cellEl = gridEl.createEl("button", { cls: "perlite-calendar-cell", attr: { type: "button", "aria-label": cellAriaLabel(date) } });
     cellEl.dataset.date = calendarDateToISOString(date);
     if (compareCalendarDates(date, today) === 0) cellEl.addClass("perlite-calendar-cell--today");
     if (compareCalendarDates(date, state.selectedDate) === 0) cellEl.addClass("perlite-calendar-cell--selected");
@@ -184,6 +193,7 @@ function renderGrid(
 function renderAgendaSection(
   agendaEl: HTMLElement,
   title: string,
+  icon: string,
   tasks: readonly ParsedTask[],
   byTask: ReadonlyMap<ParsedTask, LocatedTask>,
   options: CalendarBoardOptions,
@@ -191,7 +201,7 @@ function renderAgendaSection(
 ): void {
   if (tasks.length === 0) return;
   const sectionEl = agendaEl.createDiv({ cls: "perlite-segment" });
-  sectionEl.createEl("h6", { cls: "perlite-segment__title", text: title });
+  renderSectionHeader(sectionEl, { icon, title, count: tasks.length, accentClass: icon === "alert-triangle" ? "perlite-accent-overdue" : undefined });
   const listEl = sectionEl.createDiv({ cls: "perlite-segment__list" });
 
   for (const task of tasks) {
@@ -278,5 +288,14 @@ function monthTitle(visibleMonth: CalendarDate): string {
 function selectedDayTitle(date: CalendarDate, today: CalendarDate): string {
   if (compareCalendarDates(date, today) === 0) return "Today";
   const formatter = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+  return formatter.format(dateFromCalendarDate(date));
+}
+
+/** A day cell is now a real `<button>` (see `renderGrid`) — this is its accessible
+ * name, always the full date regardless of today/selected state (unlike
+ * `selectedDayTitle`, which collapses today to the word "Today" for the agenda heading
+ * above it; a screen-reader user tabbing through the grid still needs the real date). */
+function cellAriaLabel(date: CalendarDate): string {
+  const formatter = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
   return formatter.format(dateFromCalendarDate(date));
 }

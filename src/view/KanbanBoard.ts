@@ -1,6 +1,8 @@
 import { Notice, type App, type HoverParent, type TFile } from "obsidian";
 import { attachDragHandle } from "../design/dragController.js";
 import { renderIcon } from "../design/icons.js";
+import { renderSectionHeader } from "../design/renderSectionHeader.js";
+import { STATUS_ICON } from "../design/taskLineModel.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
 import { PRIORITY_VALUES, type Priority } from "../model/Priority.js";
 import { TASK_STATUS_CANCELLED, TASK_STATUS_TODO, type TaskStatusKind } from "../model/TaskStatus.js";
@@ -89,7 +91,13 @@ export function renderKanbanBoard(container: HTMLElement, options: KanbanBoardOp
   for (const column of columns) {
     const columnEl = boardEl.createDiv({ cls: "perlite-kanban-column" });
     columnEl.dataset.groupKey = column.key;
-    columnEl.createEl("h6", { cls: "perlite-kanban-column__title", text: `${column.label} (${column.tasks.length})` });
+    const headerEl = columnEl.createDiv({ cls: "perlite-kanban-column__header" });
+    renderSectionHeader(headerEl, {
+      icon: columnIcon(column.key, groupKey),
+      title: column.label,
+      count: column.tasks.length,
+      accentClass: columnAccentClass(column.key, groupKey),
+    });
     const bodyEl = columnEl.createDiv({ cls: "perlite-kanban-column__body" });
     for (const task of column.tasks) {
       const entry = byTask.get(task);
@@ -97,6 +105,29 @@ export function renderKanbanBoard(container: HTMLElement, options: KanbanBoardOp
       renderCard(bodyEl, options, entry.task, entry.file, draggable ? (groupKey as "status" | "priority") : null);
     }
   }
+}
+
+/** The column header's icon — status columns reuse the exact glyph a task's own status
+ * icon would show (`STATUS_ICON`, `renderTaskLine.ts`'s own map), priority columns use
+ * the same "flag" a priority chip does; every other grouping gets a generic icon since
+ * `taskGroup.key` there is arbitrary vault data (a tag, a filename, a folder path), not
+ * a fixed small set. */
+function columnIcon(key: string, groupKey: GroupKey): string {
+  if (groupKey === "status") return STATUS_ICON[key as TaskStatusKind];
+  if (groupKey === "priority") return "flag";
+  if (groupKey === "tag") return "hash";
+  if (groupKey === "file") return "file";
+  if (groupKey === "folder") return "folder";
+  return "list";
+}
+
+/** Reuses the exact same colour classes a task row's own chips already use
+ * (`perlite-chip--priority-*` in `styles.css`) rather than inventing a parallel set —
+ * a "High" column and a "High" priority chip read as the same colour. */
+function columnAccentClass(key: string, groupKey: GroupKey): string | undefined {
+  if (groupKey === "priority" && key !== "normal") return `perlite-chip--priority-${key}`;
+  if (groupKey === "status" && key === "done") return "perlite-accent-done";
+  return undefined;
 }
 
 /** Every status/priority value gets a column, even ones with zero current tasks — a

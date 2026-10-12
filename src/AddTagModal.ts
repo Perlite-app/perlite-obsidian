@@ -19,7 +19,7 @@ export class AddTagModal extends Modal {
   onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h3", { text: "Add tag" });
+    this.setTitle("Add tag");
 
     let inputEl: HTMLInputElement | null = null;
     new Setting(contentEl).setName("Tag").addText((text) => {

@@ -1,4 +1,7 @@
-import { ItemView, Menu, WorkspaceLeaf, setIcon } from "obsidian";
+import { ItemView, Menu, WorkspaceLeaf, setIcon, setTooltip } from "obsidian";
+import { accentTokenVar } from "../design/accentToken.js";
+import { renderSectionHeader } from "../design/renderSectionHeader.js";
+import { renderViewHeader } from "../design/renderViewHeader.js";
 import * as SmartListEngine from "../query/SmartListEngine.js";
 import { mergeSmartListCatalog } from "../query/smartListCatalog.js";
 import {
@@ -14,7 +17,6 @@ import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
 import { scanVaultTasks } from "../vaultTaskScan.js";
 import { SmartListEditorModal } from "../SmartListEditorModal.js";
-import { PERLITE_SMART_LIST_DETAIL_VIEW_TYPE } from "./PerliteSmartListDetailView.js";
 import type PerlitePlugin from "../main.js";
 
 /**
@@ -46,6 +48,11 @@ export class PerliteSmartListsView extends ItemView {
   }
 
   async onOpen(): Promise<void> {
+    // Mirrors `PerliteListView`'s own "Open smart lists" header action — a click-back
+    // path out of the hub that doesn't depend on the command palette or the ribbon.
+    this.addAction("circle-check", "Open task list", () => {
+      void this.plugin.activateListView();
+    });
     await this.refresh();
   }
 
@@ -54,14 +61,20 @@ export class PerliteSmartListsView extends ItemView {
     container.empty();
     container.addClass("perlite-list-view");
 
-    const header = container.createDiv({ cls: "perlite-segment" });
-    const headerRow = header.createDiv({ cls: "perlite-smart-lists-header" });
-    headerRow.createEl("h6", { cls: "perlite-segment__title", text: "Smart Lists" });
-    const newButton = headerRow.createEl("button", { text: "+ New" });
-    newButton.addEventListener("click", () => {
-      new SmartListEditorModal(this.app, null, (list) => {
-        void this.plugin.mutateSmartLists((stored) => withCreatedList(stored, list));
-      }).open();
+    renderViewHeader(container, {
+      title: "Smart Lists",
+      actions: [
+        {
+          icon: "plus",
+          label: "New list",
+          primary: true,
+          onClick: () => {
+            new SmartListEditorModal(this.app, null, (list) => {
+              void this.plugin.mutateSmartLists((stored) => withCreatedList(stored, list));
+            }).open();
+          },
+        },
+      ],
     });
 
     const configuration = parserConfiguration(this.plugin.settings);
@@ -84,7 +97,8 @@ export class PerliteSmartListsView extends ItemView {
     }
 
     if (hidden.length > 0) {
-      container.createEl("h6", { cls: "perlite-smart-lists-section-title", text: "Hidden" });
+      const hiddenHeading = container.createDiv({ cls: "perlite-smart-lists-hidden-heading" });
+      renderSectionHeader(hiddenHeading, { icon: "eye-off", title: "Hidden" });
       const hiddenSection = container.createDiv();
       for (const list of hidden) {
         this.renderRow(hiddenSection, list, countByID.get(list.id) ?? 0, true);
@@ -95,6 +109,11 @@ export class PerliteSmartListsView extends ItemView {
   private renderRow(container: HTMLElement, list: SmartList, count: number, isHidden: boolean): void {
     const row = container.createDiv({ cls: `perlite-smart-list-row${isHidden ? " perlite-smart-list-row__hidden" : ""}` });
     const iconEl = row.createDiv({ cls: "perlite-smart-list-row__icon" });
+    // A tinted tile coloured from the list's own `accentToken` when visible, or a flat
+    // muted tile when hidden — set as a CSS custom property (`accentTokenVar` resolves
+    // the token *name* to the property that carries the actual colour, per §5) rather
+    // than a literal colour, so a user's own CSS snippet can still override it.
+    iconEl.style.setProperty("--perlite-icon-tile-color", isHidden ? "var(--text-muted)" : `var(${accentTokenVar(list.accentToken)})`);
     // `list.icon` is an arbitrary Lucide name a user typed into the editor's free-text
     // field (`SmartListEditorModal`) — not restricted to `icons.ts`'s closed
     // `PerliteIconName` set, which only covers icons this plugin renders for a task's
@@ -103,6 +122,18 @@ export class PerliteSmartListsView extends ItemView {
     setIcon(iconEl, list.icon);
     row.createSpan({ cls: "perlite-smart-list-row__name", text: list.name });
     row.createSpan({ cls: "perlite-smart-list-row__count", text: String(count) });
+
+    // Right-click already opened this same menu (still does, below) — but a gesture
+    // with no visible trigger is undiscoverable, and Edit/lens/filter access shouldn't
+    // depend on knowing it exists. This button is the click-first path to the same
+    // menu; right-click remains as the power-user accelerator on top of it.
+    const menuButton = row.createEl("button", { cls: "perlite-smart-list-row__menu", attr: { "aria-label": "List options" } });
+    setTooltip(menuButton, "List options");
+    setIcon(menuButton, "more-vertical");
+    menuButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this.showMenu(event, list, isHidden);
+    });
 
     row.addEventListener("click", () => {
       void this.openDetail(list.id);
@@ -165,7 +196,6 @@ export class PerliteSmartListsView extends ItemView {
   }
 
   private async openDetail(smartListId: string): Promise<void> {
-    const leaf = this.app.workspace.getLeaf(false);
-    await leaf.setViewState({ type: PERLITE_SMART_LIST_DETAIL_VIEW_TYPE, active: true, state: { smartListId } });
+    await this.plugin.activateSmartListDetailView(smartListId);
   }
 }

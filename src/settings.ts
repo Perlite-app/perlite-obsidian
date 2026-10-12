@@ -27,6 +27,22 @@ export interface PerliteSettings {
   /** Vault-relative path Wave 2 chunk 13's quick-capture command appends to — created
    * (with any missing parent folder) on first capture if it doesn't exist yet. */
   readonly defaultInboxFile: string;
+  /** Whether `PerliteListView`'s optional "Completed" segment (tasks done today) is
+   * shown, toggled from that view's own header — not the native app's own concept
+   * (its `DefaultListView`/`ContentView` have no completed-tasks toggle to mirror), so
+   * persisted here rather than in `ParserConfiguration`. Defaults off, matching the
+   * existing "every incomplete task, segmented" framing until a viewer opts in. */
+  readonly showCompletedToday: boolean;
+  /** Whether navigating between Perlite views (smart lists hub, a smart list's own
+   * detail, a tapped tag's detail) reuses one tracked leaf — `PerlitePlugin.openPerliteView`
+   * repoints it via `setViewState` on every navigation, so it always reads as "pushed
+   * over the standard task list" with a single back button returning to it — versus each
+   * distinct destination getting (or reusing) its own dedicated tab, for anyone who wants
+   * several Perlite views open side by side. Defaults on: it's also what fixes a latent
+   * bug the "off" behavior never had — `activateListView`/`activateSmartListsView` used
+   * to look up their target leaf by view type alone, which silently spawned a duplicate
+   * tab once the original leaf had been repointed to a deeper view. */
+  readonly singleTabNavigation: boolean;
 }
 
 export const DEFAULT_SETTINGS: PerliteSettings = {
@@ -34,6 +50,8 @@ export const DEFAULT_SETTINGS: PerliteSettings = {
   globalFilterTag: DEFAULT_PARSER_CONFIGURATION.globalFilter ?? "#task",
   excludedFolders: [],
   defaultInboxFile: "Inbox.md",
+  showCompletedToday: false,
+  singleTabNavigation: true,
 };
 
 /** Builds the `ParserConfiguration` every parse call in this plugin uses, from the
