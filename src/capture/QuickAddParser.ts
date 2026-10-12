@@ -7,6 +7,7 @@ import { DEFAULT_PARSER_CONFIGURATION, type ParserConfiguration } from "../parse
 import { parseLine } from "../parser/TaskLineParser.js";
 import * as TaskSerializer from "../parser/TaskSerializer.js";
 import type { ParsedTask } from "../model/ParsedTask.js";
+import { parseRecurrenceRule } from "../recurrence/RecurrenceParser.js";
 
 /**
  * Wave 2 chunk 13's quick-capture command: Tier-1-equivalent deterministic parsing
@@ -37,11 +38,11 @@ export interface QuickAddResult {
   readonly dueDate: CalendarDate | null;
   readonly priority: Priority | null;
   readonly reminder: QuickAddReminder | null;
-  /** Never produced by `parse` itself — no deterministic phrase in free text maps
-   * unambiguously onto "scheduled" vs "due" vs "start", and a recurrence rule is
-   * open-ended text, not a single recognisable token. Exists purely so a capture UI
-   * offering explicit controls for every field a task can carry has somewhere to put a
-   * user's direct selection alongside the parsed fields. */
+  /** `scheduled`/`start` are never produced by `parse` — no deterministic phrase in free
+   * text maps unambiguously onto "scheduled" vs "due" vs "start"; they exist so a
+   * capture UI offering explicit controls has somewhere to put a direct selection.
+   * `recurrenceRule` *is* parsed since the design-pass port of the native app's chunk 58
+   * (an `every …` phrase `parseRecurrenceRule` accepts). */
   readonly scheduled: CalendarDate | null;
   readonly start: CalendarDate | null;
   readonly recurrenceRule: string | null;
@@ -61,20 +62,71 @@ export function createQuickAddResult(overrides: Partial<QuickAddResult> & { desc
 
 // --- Priority shorthand ------------------------------------------------------------------
 
-/** `!highest`/`!lowest`/`!medium`/`!high`/`!low`, case-insensitive — spelled out rather
- * than a bang-count convention since it maps 1:1 onto `Priority`'s five non-`normal`
- * cases with no separate lookup table to keep in sync. Longer names are listed before
- * their own prefixes (`highest` before `high`, `lowest` before `low`) so the regex
- * engine's ordered alternation doesn't match the short form and strand the remaining
- * letters as literal text. */
-const PRIORITY_REGEX = /!(highest|lowest|medium|high|low)\b/i;
+/** `!highest`/`!lowest`/`!medium`/`!high`/`!low`, case-insensitive — longer names before
+ * their own prefixes so the ordered alternation doesn't strand letters. Plus the
+ * bang-count shorthand (`!` low, `!!` medium, `!!!` high), only as a standalone word so
+ * "Call Sam!" is never read as a priority — the same rule `QuickAddParser.swift` uses. */
+const PRIORITY_REGEX = /!(highest|lowest|medium|high|low)\b|(?<!\S)(!{1,3})(?!\S)/i;
+
+const BANG_PRIORITY: Readonly<Record<number, Priority>> = { 1: "low", 2: "medium", 3: "high" };
 
 function firstPriorityMatch(text: string): { readonly priority: Priority; readonly start: number; readonly end: number } | null {
   const match = PRIORITY_REGEX.exec(text);
   if (match === null || match.index === undefined) return null;
-  const word = match[1]!.toLowerCase() as Priority;
-  return { priority: word, start: match.index, end: match.index + match[0].length };
+  const priority = match[1] !== undefined ? (match[1].toLowerCase() as Priority) : BANG_PRIORITY[match[2]!.length]!;
+  return { priority, start: match.index, end: match.index + match[0].length };
 }
+
+// --- Recurrence ----------------------------------------------------------------------------
+
+const WEEKDAY_NAMES = "monday|tuesday|wednesday|thursday|friday|saturday|sunday";
+
+/** "every day", "every 2 weeks", "every week on Monday", "every month when done", and the
+ * shorthand "every Friday" (written as "every week on Friday", the form the Tasks plugin
+ * itself writes). Only taken when `parseRecurrenceRule` accepts the resulting rule. */
+const RECURRENCE_REGEX = new RegExp(
+  `\\bevery\\s+(?:(\\d+\\s+)?(days?|weeks?|months?|years?)(\\s+on\\s+(?:${WEEKDAY_NAMES})(?:\\s*,\\s*(?:${WEEKDAY_NAMES}))*)?|(${WEEKDAY_NAMES}))(\\s+when\\s+done)?\\b`,
+  "gi",
+);
+
+function capitalize(word: string): string {
+  return word.length === 0 ? word : word[0]!.toUpperCase() + word.slice(1).toLowerCase();
+}
+
+function firstRecurrenceMatch(text: string): { readonly rule: string; readonly start: number; readonly end: number } | null {
+  const regex = new RegExp(RECURRENCE_REGEX);
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    const whenDone = match[5] !== undefined ? " when done" : "";
+    let rule: string;
+    if (match[4] !== undefined) {
+      rule = `every week on ${capitalize(match[4])}${whenDone}`;
+    } else {
+      const interval = match[1] !== undefined ? `${match[1].trim()} ` : "";
+      const unit = (match[2] ?? "").toLowerCase();
+      const days =
+        match[3] !== undefined
+          ? ` on ${match[3]
+              .trim()
+              .slice(2)
+              .split(",")
+              .map((day) => capitalize(day.trim()))
+              .join(",")}`
+          : "";
+      rule = `every ${interval}${unit}${days}${whenDone}`;
+    }
+    if (parseRecurrenceRule(rule) !== null) {
+      return { rule, start: match.index, end: match.index + match[0].length };
+    }
+  }
+  return null;
+}
+
+// --- Tags (spans only) ---------------------------------------------------------------------
+
+/** Highlighting only — tags stay in the description. A `#` not preceded by a word
+ * character, followed by at least one non-digit tag character. */
+const TAG_REGEX = /(?<![\p{L}\p{N}_#])#[\p{L}\p{N}_/-]*[\p{L}_/-][\p{L}\p{N}_/-]*/gu;
 
 // --- Due date/time recognition -----------------------------------------------------------
 
@@ -119,7 +171,8 @@ interface DateTimeMatch {
   readonly end: number;
 }
 
-function firstDateTimeMatch(text: string): DateTimeMatch | null {
+/** Searches `text` (the masked copy); the connector check runs against `original`. */
+function firstDateTimeMatch(text: string, original: string): DateTimeMatch | null {
   const results = chrono.parse(text, new Date());
   if (results.length === 0) return null;
   // Leftmost match wins — quick-add has one due-date field, not several, and "the first
@@ -133,7 +186,7 @@ function firstDateTimeMatch(text: string): DateTimeMatch | null {
     ? { date, time: { hour: resolved.getHours(), minute: resolved.getMinutes() } }
     : null;
 
-  const { start, end } = extendingLeadingConnector(text, result.index, result.index + result.text.length);
+  const { start, end } = extendingLeadingConnector(original, result.index, result.index + result.text.length);
   return { date, reminder, start, end };
 }
 
@@ -145,32 +198,76 @@ function collapseWhitespace(text: string): string {
   return text.replace(/\s{2,}/g, " ").trim();
 }
 
-/** Extracts at most one due-date/time phrase and at most one `!priority` token from
- * `input`, removing each matched phrase from the returned `description`. No `today`
- * parameter: chrono always resolves relative to the real system clock here, matching
- * every real call site (which passes the actual current date); `buildTaskLine` below
- * still takes `today` explicitly, since it genuinely needs it for the `➕` created-date
- * field. */
+export type QuickAddSpanKind = "date" | "priority" | "recurrence" | "tag";
+
+/** One recognised phrase in capture text, as UTF-16 offsets into the input — what a
+ * capture field highlights as the user types. */
+export interface QuickAddSpan {
+  readonly kind: QuickAddSpanKind;
+  readonly start: number;
+  readonly end: number;
+}
+
+interface Matches {
+  readonly recurrence: { readonly rule: string; readonly start: number; readonly end: number } | null;
+  readonly priority: { readonly priority: Priority; readonly start: number; readonly end: number } | null;
+  readonly date: DateTimeMatch | null;
+}
+
+/** Recurrence first, then priority, then the date — each later search runs over a copy
+ * with the earlier matches blanked to spaces (same length, so offsets still line up with
+ * `input`). Order matters: in "every Friday" the date parser would otherwise read
+ * "Friday" as a due date. */
+function recognise(input: string): Matches {
+  let masked = input;
+  const blank = (start: number, end: number): void => {
+    masked = masked.slice(0, start) + " ".repeat(end - start) + masked.slice(end);
+  };
+  const recurrence = firstRecurrenceMatch(input);
+  if (recurrence !== null) blank(recurrence.start, recurrence.end);
+  const priority = firstPriorityMatch(masked);
+  if (priority !== null) blank(priority.start, priority.end);
+  const date = firstDateTimeMatch(masked, input);
+  return { recurrence, priority, date };
+}
+
+/** Extracts at most one due-date/time phrase, one `!priority` token and one `every …`
+ * recurrence phrase from `input`, removing each from the returned `description`. No
+ * `today` parameter: chrono always resolves relative to the real system clock here,
+ * matching every real call site; `buildTaskLine` below still takes `today` explicitly,
+ * since it genuinely needs it for the `➕` created-date field. */
 export function parseQuickAdd(input: string): QuickAddResult {
+  const matches = recognise(input);
+  const ranges = [matches.recurrence, matches.priority, matches.date]
+    .filter((range): range is NonNullable<typeof range> => range !== null)
+    .sort((a, b) => b.start - a.start);
   let text = input;
+  for (const range of ranges) text = removeRange(text, range.start, range.end);
+  return createQuickAddResult({
+    description: collapseWhitespace(text),
+    dueDate: matches.date?.date ?? null,
+    priority: matches.priority?.priority ?? null,
+    reminder: matches.date?.reminder ?? null,
+    recurrenceRule: matches.recurrence?.rule ?? null,
+  });
+}
 
-  let priority: Priority | null = null;
-  const priorityMatch = firstPriorityMatch(text);
-  if (priorityMatch !== null) {
-    priority = priorityMatch.priority;
-    text = removeRange(text, priorityMatch.start, priorityMatch.end);
+/** Where each recognised phrase sits in `input` — the same matching `parseQuickAdd`
+ * uses, so a highlighted phrase is always exactly what leaves the description, plus
+ * inline `#tags`, which stay in it but still read as recognised. Sorted by position. */
+export function quickAddSpans(input: string): QuickAddSpan[] {
+  const matches = recognise(input);
+  const spans: QuickAddSpan[] = [];
+  if (matches.recurrence !== null) spans.push({ kind: "recurrence", start: matches.recurrence.start, end: matches.recurrence.end });
+  if (matches.priority !== null) spans.push({ kind: "priority", start: matches.priority.start, end: matches.priority.end });
+  if (matches.date !== null) spans.push({ kind: "date", start: matches.date.start, end: matches.date.end });
+  for (const match of input.matchAll(TAG_REGEX)) {
+    const start = match.index;
+    const end = start + match[0].length;
+    if (spans.some((span) => start < span.end && end > span.start)) continue;
+    spans.push({ kind: "tag", start, end });
   }
-
-  let dueDate: CalendarDate | null = null;
-  let reminder: QuickAddReminder | null = null;
-  const dateMatch = firstDateTimeMatch(text);
-  if (dateMatch !== null) {
-    dueDate = dateMatch.date;
-    reminder = dateMatch.reminder;
-    text = removeRange(text, dateMatch.start, dateMatch.end);
-  }
-
-  return createQuickAddResult({ description: collapseWhitespace(text), dueDate, priority, reminder });
+  return spans.sort((a, b) => a.start - b.start);
 }
 
 /** Composes a brand-new task line from a `QuickAddResult`: writes an `➕ <today>`

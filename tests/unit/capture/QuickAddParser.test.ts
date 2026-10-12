@@ -1,9 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { calendarDateToISOString, type CalendarDate } from "../../../src/model/CalendarDate.js";
 import { addDays, nextOccurrenceOfWeekday } from "../../../src/recurrence/RecurrenceCalculator.js";
 import { parseWeekday, WEEKDAY_VALUES } from "../../../src/recurrence/Weekday.js";
 import { DEFAULT_PARSER_CONFIGURATION, type ParserConfiguration } from "../../../src/parser/ParserConfiguration.js";
-import { buildQuickAddTaskLine, createQuickAddResult, parseQuickAdd } from "../../../src/capture/QuickAddParser.js";
+import { buildQuickAddTaskLine, createQuickAddResult, parseQuickAdd, quickAddSpans } from "../../../src/capture/QuickAddParser.js";
 
 /**
  * Behavioural port of `PerliteCoreTests/QuickAddParserTests.swift` — asserts relative to
@@ -210,5 +210,80 @@ describe("buildQuickAddTaskLine", () => {
     const result = parseQuickAdd("Buy milk");
     const task = buildQuickAddTaskLine(result, today(), configuration);
     expect(task.description).toBe("Buy milk");
+  });
+});
+
+// Design-pass port of the native app's chunk 58: `every …` recurrence, `!`/`!!`/`!!!`,
+// and `quickAddSpans` — the same cases `QuickAddParserRecurrenceAndSpanTests` covers.
+describe("recurrence, bang priority and spans", () => {
+  it.each([
+    ["Water plants every day", "every day"],
+    ["Pay rent every month", "every month"],
+    ["Backup every 2 weeks", "every 2 weeks"],
+    ["Standup every week on Monday", "every week on Monday"],
+    ["Gym every week on monday, thursday", "every week on Monday,Thursday"],
+    ["Review every Friday", "every week on Friday"],
+    ["Clean filter every month when done", "every month when done"],
+  ])("recognises %s", (input, rule) => {
+    const result = parseQuickAdd(input);
+    expect(result.recurrenceRule).toBe(rule);
+    expect(result.description.toLowerCase()).not.toContain("every");
+  });
+
+  it("doesn't also read a recurring weekday as a due date", () => {
+    const result = parseQuickAdd("Review every Friday");
+    expect(result.dueDate).toBeNull();
+    expect(result.description).toBe("Review");
+  });
+
+  it("takes a due date and a recurrence together", () => {
+    const result = parseQuickAdd("Water plants tomorrow every day");
+    expect(result.recurrenceRule).toBe("every day");
+    expect(result.dueDate).not.toBeNull();
+    expect(result.description).toBe("Water plants");
+  });
+
+  it("leaves an unrecognised every-phrase as text", () => {
+    const result = parseQuickAdd("Something every so often");
+    expect(result.recurrenceRule).toBeNull();
+    expect(result.description).toBe("Something every so often");
+  });
+
+  it.each([
+    ["Ship it !", "low"],
+    ["Ship it !!", "medium"],
+    ["Ship it !!!", "high"],
+    ["!! Ship it", "medium"],
+  ])("reads %s as a bang-count priority", (input, priority) => {
+    const result = parseQuickAdd(input);
+    expect(result.priority).toBe(priority);
+    expect(result.description).toBe("Ship it");
+  });
+
+  it("never reads an exclamation inside a word as a priority", () => {
+    const result = parseQuickAdd("Call Sam! wow!!");
+    expect(result.priority).toBeNull();
+    expect(result.description).toBe("Call Sam! wow!!");
+  });
+
+  it("returns a span for each recognised phrase, in order", () => {
+    const input = "Reply to review tomorrow !! every week #work";
+    const spans = quickAddSpans(input);
+    expect(spans.map((span) => span.kind)).toEqual(["date", "priority", "recurrence", "tag"]);
+    expect(spans.map((span) => input.slice(span.start, span.end))).toEqual(["tomorrow", "!!", "every week", "#work"]);
+  });
+
+  it("keeps span offsets right after astral characters", () => {
+    const input = "Café ☕️ tomorrow !high";
+    expect(quickAddSpans(input).map((span) => input.slice(span.start, span.end))).toEqual(["tomorrow", "!high"]);
+  });
+
+  it("removes exactly the non-tag spans from the description", () => {
+    const input = "Standup on Friday !low #team";
+    let text = input;
+    for (const span of quickAddSpans(input).filter((s) => s.kind !== "tag").reverse()) {
+      text = text.slice(0, span.start) + text.slice(span.end);
+    }
+    expect(text.replace(/\s{2,}/g, " ").trim()).toBe(parseQuickAdd(input).description);
   });
 });
