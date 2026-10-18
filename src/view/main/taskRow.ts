@@ -8,11 +8,12 @@ import { isOpen, isOverdue, priorityTitle, splitNotePath } from "../../query/len
 import type { LocatedTask } from "../../vaultTaskScan.js";
 
 /**
- * The design pass's task row — one markup for the list, board cards and calendar items.
- * A round completion control whose ring is the priority colour (the native app's
- * `TaskStatusRing`), the title without its tags, and one quiet meta line: the note (when
- * the list isn't already grouped by note), a repeat mark, the tags, and the due day as a
- * pill — tinted orange when overdue.
+ * The design pass's list row. A round completion control whose ring is the priority
+ * colour (the native app's `TaskStatusRing`), then one line: the title without its tags
+ * (cut with an ellipsis, the full text on hover), and on the right the note (when the
+ * list isn't already grouped by note), a repeat mark, the tags, and the due day as a
+ * pill — tinted orange when overdue. A narrow pane wraps the meta under the title
+ * (`styles.css` container query).
  *
  * Colours come only from theme variables (`styles.css`), so every Obsidian theme owns
  * the palette.
@@ -24,7 +25,6 @@ export interface TaskRowOptions {
   /** Show the note name in the meta line — off when the list is grouped by note. */
   readonly showNote: boolean;
   readonly selected: boolean;
-  readonly compact?: boolean;
   readonly onComplete: (entry: LocatedTask) => void;
   readonly onSelect: (entry: LocatedTask, rowEl: HTMLElement) => void;
   readonly onOpen: (entry: LocatedTask) => void;
@@ -58,7 +58,6 @@ export function renderTaskRow(container: HTMLElement, options: TaskRowOptions): 
   const row = container.createDiv({ cls: "perlite-row" });
   row.toggleClass("is-done", !open);
   row.toggleClass("is-selected", options.selected);
-  row.toggleClass("is-compact", options.compact === true);
 
   const toggle = row.createEl("button", {
     cls: "perlite-row__toggle",
@@ -76,7 +75,8 @@ export function renderTaskRow(container: HTMLElement, options: TaskRowOptions): 
   });
 
   const body = row.createDiv({ cls: "perlite-row__body" });
-  body.createDiv({ cls: "perlite-row__title", text: titleWithoutTags(task) });
+  const title = titleWithoutTags(task);
+  body.createDiv({ cls: "perlite-row__title", text: title, attr: { title } });
 
   const meta = body.createDiv({ cls: "perlite-row__meta" });
   if (options.showNote) {

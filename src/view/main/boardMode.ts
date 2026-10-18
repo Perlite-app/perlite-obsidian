@@ -1,4 +1,5 @@
 import { Menu, Platform, setIcon, type ItemView } from "obsidian";
+import { PRIORITY_ICON } from "../../design/priorityIcon.js";
 import { relativeDayLabel } from "../../design/relativeDay.js";
 import { dateValueCalendarDate } from "../../model/DateValue.js";
 import { PRIORITY_VALUES, priorityMarker, type Priority } from "../../model/Priority.js";
@@ -29,6 +30,8 @@ export interface BoardModeOptions {
   readonly tasks: readonly LocatedTask[];
   readonly toast: Toast;
   readonly afterWrite: () => Promise<void>;
+  /** Renders the List / Board / Calendar switch at the end of the toolbar. */
+  readonly layoutSwitch: (container: HTMLElement) => void;
 }
 
 interface Column {
@@ -67,9 +70,9 @@ export function renderBoardMode(body: HTMLElement, options: BoardModeOptions): v
 
   const openCount = entries.filter((entry) => isOpen(entry.task)).length;
   const doing = entries.filter((entry) => statusChoiceOf(entry.task) === "doing").length;
-  const toolbar = body.createDiv({ cls: "perlite-toolbar" });
+  const toolbar = body.createDiv({ cls: "perlite-toolbar perlite-toolbar--pane" });
   toolbar.createSpan({
-    cls: "perlite-toolbar__count",
+    cls: "perlite-toolbar__count perlite-toolbar__summary",
     text: `${openCount} open · ${doing} in progress · ${Platform.isMobile ? "use ⋯ to move" : "drag, or use ⋯ to move"}`,
   });
   const picker = toolbar.createDiv({ cls: "perlite-chips", attr: { role: "radiogroup", "aria-label": "Columns" } });
@@ -86,6 +89,7 @@ export function renderBoardMode(body: HTMLElement, options: BoardModeOptions): v
     });
     chip.addEventListener("click", () => state.updateView({ boardColumns: value as BoardColumns }));
   }
+  options.layoutSwitch(toolbar);
 
   const columns = buildColumns(columnsBy, entries, options);
   const board = body.createDiv({ cls: "perlite-board" });
@@ -106,7 +110,8 @@ export function renderBoardMode(body: HTMLElement, options: BoardModeOptions): v
         cls: "perlite-board__folded",
         attr: { type: "button", "aria-label": `Expand ${column.name} column` },
       });
-      setIcon(folded.createSpan(), "chevron-right");
+      folded.dataset.tone = column.tone;
+      setIcon(folded.createSpan({ cls: "perlite-column__icon" }), column.icon);
       folded.createSpan({ cls: "perlite-board__folded-label", text: `${column.name} · ${column.entries.length}` });
       folded.addEventListener("click", () => {
         collapsed.delete(column.key);
@@ -124,7 +129,7 @@ export function renderBoardMode(body: HTMLElement, options: BoardModeOptions): v
     head.createSpan({ cls: "perlite-column__count", text: String(column.entries.length) });
     head.createEl("code", { cls: "perlite-column__badge", text: column.badge });
     if (canCollapse && column.key === "cancelled") {
-      const fold = head.createEl("button", { cls: "perlite-icon-button", attr: { type: "button", "aria-label": "Collapse column" } });
+      const fold = head.createEl("button", { cls: "perlite-icon-button perlite-column__fold", attr: { type: "button", "aria-label": "Collapse column" } });
       setIcon(fold, "chevron-left");
       fold.addEventListener("click", () => {
         collapsed.add(column.key);
@@ -263,12 +268,14 @@ function renderCard(
     void openTaskNote(view.app, entry, "split");
   });
 
-  const meta = main.createDiv({ cls: "perlite-row__meta" });
+  const meta = main.createDiv({ cls: "perlite-card__meta" });
   const due = dateValueCalendarDate(task.due);
   if (due !== null) meta.createSpan({ cls: "perlite-pill", text: relativeDayLabel(due, today) }).toggleClass("is-overdue", isOverdue(task, today));
   if (columnsBy !== "priority" && task.priority !== "normal") {
-    const pill = meta.createSpan({ cls: "perlite-pill perlite-pill--priority", text: priorityTitle(task.priority) });
+    const pill = meta.createSpan({ cls: "perlite-pill perlite-pill--priority" });
     pill.dataset.priority = task.priority;
+    setIcon(pill.createSpan({ cls: "perlite-pill__icon" }), PRIORITY_ICON[task.priority]);
+    pill.appendText(priorityTitle(task.priority));
   }
   if (task.recurrenceRule !== null) setIcon(meta.createSpan({ cls: "perlite-row__icon", attr: { "aria-label": `Repeats ${task.recurrenceRule}` } }), "repeat");
   if (task.tags.length > 0) meta.createSpan({ cls: "perlite-row__tags", text: task.tags.map((tag) => tag.raw).join(" ") });

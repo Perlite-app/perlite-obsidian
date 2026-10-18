@@ -31,6 +31,8 @@ export interface CalendarModeOptions {
   readonly tasks: readonly LocatedTask[];
   readonly toast: Toast;
   readonly afterWrite: () => Promise<void>;
+  /** Renders the List / Board / Calendar switch at the end of the toolbar. */
+  readonly layoutSwitch: (container: HTMLElement) => void;
 }
 
 export const FIELD_EMOJI: Readonly<Record<CalendarField, string>> = { due: "📅", scheduled: "⏳", start: "🛫" };
@@ -84,8 +86,9 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
   let dragged: LocatedTask | null = null;
 
   // --- Toolbar --------------------------------------------------------------------------
-  const toolbar = body.createDiv({ cls: "perlite-toolbar perlite-cal-toolbar" });
-  const titles = toolbar.createDiv({ cls: "perlite-cal-toolbar__titles" });
+  const toolbar = body.createDiv({ cls: "perlite-toolbar perlite-toolbar--pane perlite-cal-toolbar" });
+  const lead = toolbar.createDiv({ cls: "perlite-cal-toolbar__lead" });
+  const titles = lead.createDiv({ cls: "perlite-cal-toolbar__titles" });
   const start = range === "week" ? weekStart(anchor, first) : { ...anchor, day: 1 };
   titles.createDiv({ cls: "perlite-cal-toolbar__title", text: monthTitle(start) });
   const end = addDaysUTC(start, 6);
@@ -96,7 +99,7 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
         ? `Week ${isoWeek(start)} · ${start.day} ${shortDayLabel(start).split(" ").at(-1)} – ${end.day} ${shortDayLabel(end).split(" ").at(-1)}`
         : `${tasks.filter((entry) => isOpen(entry.task) && fieldDate(entry.task, field)?.month === anchor.month && fieldDate(entry.task, field)?.year === anchor.year).length} open this month`,
   });
-  const nav = toolbar.createDiv({ cls: "perlite-cal-toolbar__nav" });
+  const nav = lead.createDiv({ cls: "perlite-cal-toolbar__nav" });
   const step = (delta: number): void => {
     state.calendarAnchor = range === "week" ? addDaysUTC(anchor, 7 * delta) : addMonths({ ...anchor, day: 1 }, delta);
     state.trigger("view");
@@ -104,7 +107,7 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
   const prev = nav.createEl("button", { cls: "perlite-icon-button", attr: { type: "button", "aria-label": range === "week" ? "Previous week" : "Previous month" } });
   setIcon(prev, "chevron-left");
   prev.addEventListener("click", () => step(-1));
-  const todayButton = nav.createEl("button", { cls: "perlite-button", text: "Today", attr: { type: "button" } });
+  const todayButton = nav.createEl("button", { cls: "perlite-button perlite-button--outline", text: "Today", attr: { type: "button" } });
   todayButton.addEventListener("click", () => {
     state.calendarAnchor = todayCalendarDate();
     state.trigger("view");
@@ -132,6 +135,7 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
     });
     button.addEventListener("click", () => state.updateView({ calendarRange: option }));
   }
+  options.layoutSwitch(toolbar);
 
   // --- Writes -----------------------------------------------------------------------------
   const configuration = parserConfiguration(plugin.settings);
@@ -190,6 +194,7 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
 
   // --- Grid + tray --------------------------------------------------------------------
   const layout = body.createDiv({ cls: "perlite-cal" });
+  const gridScroller = layout.createDiv({ cls: "perlite-cal__grid" });
   const byDay = new Map<string, LocatedTask[]>();
   for (const entry of tasks) {
     const date = fieldDate(entry.task, field);
@@ -199,28 +204,32 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
   }
 
   if (range === "week") {
-    const week = layout.createDiv({ cls: "perlite-cal-week" });
-    for (let index = 0; index < 7; index += 1) {
-      const date = addDaysUTC(start, index);
+    // Two grid rows: the day headings, then the days themselves, which take the rest of
+    // the height and scroll on their own.
+    const week = gridScroller.createDiv({ cls: "perlite-cal-week" });
+    const days = Array.from({ length: 7 }, (_, index) => addDaysUTC(start, index));
+    for (const date of days) {
       const items = byDay.get(calendarDateToISOString(date)) ?? [];
-      const isToday = compareCalendarDates(date, today) === 0;
-      const dayEl = week.createDiv({ cls: "perlite-cal-day", attr: { "aria-label": shortDayLabel(date) } });
-      dayEl.toggleClass("is-today", isToday);
-      dayEl.toggleClass("is-weekend", weekdayOf(date) === 0 || weekdayOf(date) === 6);
-      const head = dayEl.createDiv({ cls: "perlite-cal-day__head" });
+      const head = week.createDiv({ cls: "perlite-cal-day__head" });
+      head.toggleClass("is-today", compareCalendarDates(date, today) === 0);
       head.createSpan({ cls: "perlite-cal-day__dow", text: weekdayShort(date) });
       head.createSpan({ cls: "perlite-cal-day__num", text: String(date.day) });
       const openCount = items.filter((entry) => isOpen(entry.task)).length;
-      head.createSpan({ cls: "perlite-cal-day__load", text: openCount > 0 ? `${openCount} open` : "" });
-      const list = dayEl.createDiv({ cls: "perlite-cal-day__items" });
+      if (openCount > 0) head.createSpan({ cls: "perlite-cal-day__load", text: `${openCount} open` });
+    }
+    for (const date of days) {
+      const items = byDay.get(calendarDateToISOString(date)) ?? [];
+      const dayEl = week.createDiv({ cls: "perlite-cal-day", attr: { "aria-label": shortDayLabel(date) } });
+      dayEl.toggleClass("is-today", compareCalendarDates(date, today) === 0);
+      dayEl.toggleClass("is-weekend", weekdayOf(date) === 0 || weekdayOf(date) === 6);
       for (const entry of items) {
-        const card = renderCalendarCard(list, entry, today, field, select, complete, state.isSelected(entry));
+        const card = renderCalendarCard(dayEl, entry, today, field, select, complete, state.isSelected(entry));
         draggable(card, entry);
       }
       dropZone(dayEl, date);
     }
   } else {
-    const month = layout.createDiv({ cls: "perlite-cal-month" });
+    const month = gridScroller.createDiv({ cls: "perlite-cal-month" });
     for (let index = 0; index < 7; index += 1) {
       month.createDiv({ cls: "perlite-cal-month__dow", text: weekdayShort(addDaysUTC(weekStart(today, first), index)) });
     }
@@ -257,7 +266,7 @@ export function renderCalendarMode(body: HTMLElement, options: CalendarModeOptio
   const tray = layout.createDiv({ cls: "perlite-cal-tray", attr: { "aria-label": `No ${FIELD_NAME[field].toLowerCase()} date` } });
   const trayHead = tray.createDiv({ cls: "perlite-cal-tray__head" });
   trayHead.createEl("h2", { text: `No ${FIELD_NAME[field].toLowerCase()} date` });
-  trayHead.createSpan({ cls: "perlite-column__count", text: String(unplaced.length) });
+  trayHead.createSpan({ cls: "perlite-cal-tray__count", text: String(unplaced.length) });
   tray.createEl("p", {
     cls: "perlite-cal-tray__hint",
     text: Platform.isMobile ? "Select a task to set its dates in the Task panel." : "Drag onto a day to write its date. Drag back here to remove it.",
@@ -292,7 +301,7 @@ function renderCalendarCard(
   toggle.addEventListener("click", () => void onComplete(entry));
   const main = card.createEl("button", { cls: "perlite-card__main perlite-card__select", attr: { type: "button" } });
   main.createSpan({ cls: "perlite-card__title", text: titleWithoutTags(task) });
-  const meta = main.createSpan({ cls: "perlite-row__meta" });
+  const meta = main.createSpan({ cls: "perlite-card__meta" });
   if (field === "due" && isOverdue(task, today)) meta.createSpan({ cls: "perlite-pill is-overdue", text: "Overdue" });
   if (task.recurrenceRule !== null) setIcon(meta.createSpan({ cls: "perlite-row__icon" }), "repeat");
   meta.createSpan({ cls: "perlite-row__note", text: splitNotePath(entry.file.path).note });

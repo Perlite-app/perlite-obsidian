@@ -24,7 +24,7 @@ import { renderBoardMode } from "./main/boardMode.js";
 import { renderCalendarMode } from "./main/calendarMode.js";
 import { parseWithDefaults, previewLine, renderCaptureField, type CaptureField } from "./main/captureField.js";
 import { Toast } from "./main/toast.js";
-import { renderStatusRing, renderTaskRow, titleWithoutTags } from "./main/taskRow.js";
+import { renderTaskRow, titleWithoutTags } from "./main/taskRow.js";
 import { ListKeyboardNav, type KeyboardNavRow } from "./ListKeyboardNav.js";
 import { completeTaskAndWrite } from "./taskRowInteractions.js";
 import { openTaskNote } from "./taskWrites.js";
@@ -39,7 +39,9 @@ import type PerlitePlugin from "../main.js";
  *   typed on, an Up next card, then the tasks grouped by note, due day or priority.
  *   Click a row to show it in the Task sidebar; double-click (or Enter) to open the
  *   note at its line. Keyboard triage (`ListKeyboardNav`) works as before.
- * - **Board** and **Calendar** — `main/boardMode.ts`, `main/calendarMode.ts`.
+ * - **Board** and **Calendar** — `main/boardMode.ts`, `main/calendarMode.ts`. No title
+ *   block: one toolbar row (with the layout switch) and the rest of the pane for the
+ *   columns or the grid, which fill its height and scroll inside.
  *
  * Keeps the original view type id so a saved workspace still opens it.
  */
@@ -167,8 +169,13 @@ export class PerliteListView extends ItemView {
     const state = this.plugin.state;
     const view = state.view;
     const tasks = this.lensTasks();
+    const scroller = this.containerEl.children[1] as HTMLElement;
+    // Board and calendar fill the pane and scroll inside their columns/days; the list
+    // scrolls the pane itself.
+    scroller.toggleClass("is-fill", view.mode !== "list");
+    body.dataset.mode = view.mode;
 
-    this.renderHeader(body, tasks);
+    if (view.mode === "list") this.renderHeader(body, tasks);
 
     if (state.conflictPaths.length > 0) {
       const count = state.conflictPaths.length;
@@ -182,14 +189,15 @@ export class PerliteListView extends ItemView {
       await this.plugin.refreshAllViews();
     };
 
+    const layoutSwitch = (container: HTMLElement): void => this.renderLayoutSwitch(container);
     if (view.mode === "board") {
       this.keyboardNav.setRows([]);
-      renderBoardMode(body, { plugin: this.plugin, view: this, tasks, toast: this.toast!, afterWrite: after });
+      renderBoardMode(body, { plugin: this.plugin, view: this, tasks, toast: this.toast!, afterWrite: after, layoutSwitch });
       return;
     }
     if (view.mode === "calendar") {
       this.keyboardNav.setRows([]);
-      renderCalendarMode(body, { plugin: this.plugin, view: this, tasks, toast: this.toast!, afterWrite: after });
+      renderCalendarMode(body, { plugin: this.plugin, view: this, tasks, toast: this.toast!, afterWrite: after, layoutSwitch });
       return;
     }
     this.renderList(body, tasks);
@@ -211,7 +219,14 @@ export class PerliteListView extends ItemView {
     titles.createDiv({ cls: "perlite-header__title", text: lensTitle(state.lens, state.smartLists) });
     titles.createDiv({ cls: "perlite-header__subtitle", text: `${longDayLabel(today)} · ${done} of ${tasks.length} done` });
 
-    const switcher = header.createDiv({ cls: "perlite-segmented", attr: { role: "radiogroup", "aria-label": "Layout" } });
+    this.renderLayoutSwitch(header);
+  }
+
+  /** List / Board / Calendar — in the list's header, and at the end of the board's and
+   * calendar's toolbar. */
+  private renderLayoutSwitch(container: HTMLElement): void {
+    const state = this.plugin.state;
+    const switcher = container.createDiv({ cls: "perlite-segmented perlite-layout-switch", attr: { role: "radiogroup", "aria-label": "Layout" } });
     for (const option of MODES) {
       const button = switcher.createEl("button", {
         cls: "perlite-segmented__option",
@@ -319,7 +334,7 @@ export class PerliteListView extends ItemView {
 
     const box = body.createDiv({ cls: "perlite-capture-box" });
     const rowEl = box.createDiv({ cls: "perlite-capture-box__row" });
-    setIcon(rowEl.createSpan({ cls: "perlite-capture-box__icon" }), "plus");
+    setIcon(rowEl.createSpan({ cls: "perlite-capture-box__icon" }), "circle-plus");
     const preview = box.createDiv({ cls: "perlite-capture-box__preview" });
 
     const paintPreview = (): void => {
@@ -327,9 +342,7 @@ export class PerliteListView extends ItemView {
       const line = previewLine(parseWithDefaults(this.draft, defaults, todayCalendarDate()), this.plugin.settings, todayCalendarDate());
       preview.toggleClass("is-empty", line === null);
       if (line === null) return;
-      const where = preview.createSpan({ cls: "perlite-capture-box__dest" });
-      setIcon(where.createSpan(), "file");
-      where.appendText(splitNotePath(destination).note);
+      preview.createSpan({ cls: "perlite-capture-box__dest", text: destination });
       preview.createEl("code", { cls: "perlite-capture-box__md", text: line });
     };
 
@@ -377,14 +390,12 @@ export class PerliteListView extends ItemView {
       text: due !== null ? (isOverdue(task, today) ? `Overdue · ${relativeDayLabel(due, today).toLowerCase()}` : `Due ${relativeDayLabel(due, today).toLowerCase()}`) : priorityTitle(task.priority),
     });
     when.toggleClass("is-overdue", isOverdue(task, today));
-    const titleRow = text.createDiv({ cls: "perlite-upnext__title" });
-    renderStatusRing(titleRow, task);
-    titleRow.createSpan({ text: titleWithoutTags(task) });
+    text.createDiv({ cls: "perlite-upnext__title", text: titleWithoutTags(task) });
     const { folder, note } = splitNotePath(entry.file.path);
     text.createDiv({ cls: "perlite-upnext__crumb", text: `${folder}${note} · line ${(task.location?.lineIndex ?? 0) + 1}` });
 
     const actions = card.createDiv({ cls: "perlite-upnext__actions" });
-    const details = actions.createEl("button", { cls: "perlite-button", text: "Details", attr: { type: "button" } });
+    const details = actions.createEl("button", { cls: "perlite-button perlite-button--ghost", text: "Details", attr: { type: "button" } });
     details.addEventListener("click", () => {
       this.plugin.state.select(entry);
       void this.plugin.revealTaskSidebar();

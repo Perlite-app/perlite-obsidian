@@ -435,14 +435,35 @@
  * colour: highest red, high orange, medium yellow, low blue, lowest cyan.
  * ==================================================================================== */
 
+/* Sizes follow the "Plugin ·" artboards: 12–14px type, 24–30px controls, a 760px reading
+ * column for the list. Board and calendar (`.is-fill`) take the whole pane instead and
+ * scroll inside their columns and days. */
 .perlite-main {
   position: relative;
+  container-type: inline-size;
+  padding: 0;
 }
 
 .perlite-main__body {
-  max-width: 1200px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: var(--size-4-2) var(--size-4-4) var(--size-4-12);
+  padding: 4px 28px 56px;
+}
+
+.perlite-main.is-fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.perlite-main.is-fill .perlite-main__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
 }
 
 /* ---- Shared controls ---------------------------------------------------------------- */
@@ -451,7 +472,7 @@
   gap: 2px;
   padding: 2px;
   border-radius: var(--radius-m);
-  background-color: var(--background-modifier-hover);
+  background-color: var(--background-secondary);
 }
 
 .perlite-segmented--fill {
@@ -466,17 +487,21 @@
 button.perlite-segmented__option {
   display: inline-flex;
   align-items: center;
-  gap: var(--size-4-1);
-  height: auto;
-  min-height: 28px;
-  padding: var(--size-2-2) var(--size-4-2);
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
   border: none;
-  border-radius: var(--radius-s);
+  border-radius: 6px;
   background: transparent;
   box-shadow: none;
   color: var(--text-muted);
-  font-size: var(--font-ui-small);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
   cursor: pointer;
+}
+
+button.perlite-segmented__option:hover {
+  color: var(--text-normal);
 }
 
 button.perlite-segmented__option[aria-checked="true"] {
@@ -487,9 +512,10 @@ button.perlite-segmented__option[aria-checked="true"] {
 
 .perlite-segmented--stacked button.perlite-segmented__option {
   flex-direction: column;
-  gap: 2px;
-  padding: var(--size-4-1) 2px;
-  font-size: var(--font-ui-smaller);
+  gap: 1px;
+  height: 36px;
+  padding: 0 2px;
+  font-size: 10px;
 }
 
 .perlite-segmented__icon {
@@ -497,8 +523,8 @@ button.perlite-segmented__option[aria-checked="true"] {
 }
 
 .perlite-segmented__icon svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .perlite-chips {
@@ -506,24 +532,32 @@ button.perlite-segmented__option[aria-checked="true"] {
   flex-wrap: wrap;
   align-items: center;
   gap: 2px;
-}
-
-.perlite-chips__label {
-  margin-right: var(--size-4-1);
-  color: var(--text-faint);
   font-size: var(--font-ui-smaller);
 }
 
+.perlite-chips__label {
+  margin-right: 6px;
+  color: var(--text-muted);
+}
+
 button.perlite-chips__chip {
-  height: auto;
-  padding: var(--size-2-1) var(--size-4-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
   border: none;
   border-radius: var(--radius-s);
   background: transparent;
   box-shadow: none;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
   cursor: pointer;
+}
+
+button.perlite-chips__chip:hover {
+  color: var(--text-normal);
 }
 
 button.perlite-chips__chip[aria-checked="true"] {
@@ -535,8 +569,8 @@ button.perlite-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border: none;
   border-radius: var(--radius-s);
@@ -552,24 +586,58 @@ button.perlite-icon-button:hover {
 }
 
 button.perlite-icon-button svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .perlite-button {
   display: inline-flex;
   align-items: center;
-  gap: var(--size-4-1);
+  gap: 6px;
 }
 
 .perlite-button svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.8;
+}
+
+.perlite-upnext button.perlite-button,
+button.perlite-button--outline {
+  height: 30px;
+  padding: 0 14px;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+button.perlite-button--ghost {
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-accent);
+}
+
+button.perlite-button--ghost:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+button.perlite-button--outline {
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-ui-smaller);
+}
+
+button.perlite-button--outline:hover {
+  background-color: var(--background-modifier-hover);
 }
 
 .perlite-banner {
-  margin-bottom: var(--size-4-3);
-  padding: var(--size-4-2) var(--size-4-3);
+  margin-bottom: 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-m);
   background-color: rgba(var(--color-orange-rgb), 0.12);
   color: var(--text-normal);
@@ -581,14 +649,29 @@ button.perlite-icon-button svg {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--size-4-2);
-  margin: var(--size-4-4) 0 var(--size-4-2);
+  gap: 8px 12px;
+  margin: 16px 0 0;
+  padding: 0 4px;
+}
+
+/* The board's and calendar's only header row — summary, pickers, layout switch. */
+.perlite-toolbar--pane {
+  flex: none;
+  justify-content: flex-start;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 10px 20px 10px;
 }
 
 .perlite-toolbar__count {
   color: var(--text-muted);
-  font-size: var(--font-ui-small);
+  font-size: var(--font-ui-smaller);
   font-variant-numeric: tabular-nums;
+}
+
+.perlite-toolbar__summary {
+  flex: 1 1 auto;
+  white-space: nowrap;
 }
 
 /* ---- Header ------------------------------------------------------------------------- */
@@ -596,35 +679,37 @@ button.perlite-icon-button svg {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--size-4-3);
-  padding: var(--size-4-2) 0 var(--size-4-3);
+  gap: 10px 14px;
+  padding: 6px 0 14px;
 }
 
 /* A ring drawn with a conic gradient masked to an annulus — no SVG, follows the accent. */
 .perlite-progress {
   flex: none;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: conic-gradient(var(--interactive-accent) calc(var(--perlite-progress, 0) * 1turn), var(--background-modifier-border) 0);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3.5px));
 }
 
 .perlite-header__titles {
+  display: flex;
   flex: 1 1 200px;
+  flex-direction: column;
   min-width: 0;
 }
 
 .perlite-header__title {
-  font-size: var(--h2-size);
+  font-size: 20px;
   font-weight: var(--font-bold);
-  line-height: 1.2;
+  line-height: 26px;
 }
 
 .perlite-header__subtitle {
   color: var(--text-muted);
-  font-size: var(--font-ui-small);
+  font-size: var(--font-ui-smaller);
 }
 
 /* ---- Capture field (mirror + transparent textarea in one grid cell) ----------------- */
@@ -638,11 +723,11 @@ button.perlite-icon-button svg {
 .perlite-capture > textarea.perlite-capture__input {
   grid-area: 1 / 1;
   margin: 0;
-  padding: 2px 0;
+  padding: 0;
   border: none;
   font-family: var(--font-interface);
-  font-size: var(--font-ui-medium);
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 24px;
   letter-spacing: normal;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -650,8 +735,8 @@ button.perlite-icon-button svg {
 
 .perlite-capture.is-large > .perlite-capture__mirror,
 .perlite-capture.is-large > textarea.perlite-capture__input {
-  font-size: 1.3em;
-  font-weight: var(--font-medium);
+  font-size: 17px;
+  line-height: 26px;
 }
 
 .perlite-capture__mirror {
@@ -669,7 +754,7 @@ textarea.perlite-capture__input:hover {
   background: transparent;
   box-shadow: none;
   color: transparent;
-  caret-color: var(--interactive-accent);
+  caret-color: var(--text-accent);
 }
 
 textarea.perlite-capture__input::placeholder {
@@ -678,60 +763,71 @@ textarea.perlite-capture__input::placeholder {
 
 .perlite-token--date,
 .perlite-token--recurrence,
-.perlite-token--tag {
+.perlite-token--tag,
+button.perlite-chip.perlite-token--date,
+button.perlite-chip.perlite-token--recurrence,
+button.perlite-chip.perlite-token--tag {
   border-radius: 4px;
   background-color: hsla(var(--interactive-accent-hsl), 0.15);
   color: var(--text-accent);
 }
 
-.perlite-token--priority {
+.perlite-token--priority,
+button.perlite-chip.perlite-token--priority {
   border-radius: 4px;
   background-color: rgba(var(--color-orange-rgb), 0.15);
   color: var(--color-orange);
 }
 
 .perlite-capture-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-l);
   background-color: var(--background-primary);
 }
 
 .perlite-capture-box:focus-within {
-  border-color: var(--interactive-accent);
+  border-color: hsla(var(--interactive-accent-hsl), 0.6);
 }
 
 .perlite-capture-box__row {
   display: flex;
   align-items: flex-start;
-  gap: var(--size-4-2);
-  padding: var(--size-4-2) var(--size-4-3);
+  gap: 10px;
 }
 
 .perlite-capture-box__icon {
   display: inline-flex;
-  margin-top: 5px;
-  color: var(--text-faint);
+  margin-top: 3.5px;
+  color: var(--text-accent);
 }
 
 .perlite-capture-box__icon svg {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
 }
 
 .perlite-capture-box__hint {
   flex: none;
-  margin-top: 6px;
   color: var(--text-faint);
   font-size: var(--font-ui-smaller);
+  line-height: 24px;
 }
 
 .perlite-capture-box__preview {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--size-4-2);
-  padding: var(--size-4-2) var(--size-4-3);
-  border-top: 1px solid var(--background-modifier-border);
+  gap: 8px;
+  padding-left: 27px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  line-height: 18px;
+  white-space: nowrap;
 }
 
 .perlite-capture-box__preview.is-empty {
@@ -739,17 +835,14 @@ textarea.perlite-capture__input::placeholder {
 }
 
 .perlite-capture-box__dest {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
+  flex: none;
+  color: var(--text-accent);
 }
 
-.perlite-capture-box__dest svg {
-  width: 12px;
-  height: 12px;
+.perlite-capture-box__preview .perlite-capture-box__md {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .perlite-capture-box__md,
@@ -769,39 +862,39 @@ textarea.perlite-capture__input::placeholder {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--size-4-3);
-  margin-top: var(--size-4-3);
-  padding: var(--size-4-3) var(--size-4-4);
+  gap: 10px 16px;
+  margin-top: 14px;
+  padding: 14px 16px;
   border-radius: var(--radius-l);
-  background-color: hsla(var(--interactive-accent-hsl), 0.08);
+  background-color: hsla(var(--interactive-accent-hsl), 0.13);
 }
 
 .perlite-upnext__text {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
 }
 
 .perlite-upnext__eyebrow {
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.04em;
+  color: var(--text-accent);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.7px;
   text-transform: uppercase;
 }
 
 .perlite-upnext__eyebrow .is-overdue,
-.perlite-group__head[data-tone="overdue"],
+.perlite-group__head[data-tone="overdue"] .perlite-group__icon,
 .perlite-field.is-overdue .perlite-field__value {
   color: var(--color-orange);
 }
 
 .perlite-upnext__title {
-  display: flex;
-  align-items: center;
-  gap: var(--size-4-2);
-  margin: 2px 0;
-  font-size: var(--font-ui-large);
-  font-weight: var(--font-semibold);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 22px;
 }
 
 .perlite-upnext__crumb {
@@ -811,22 +904,22 @@ textarea.perlite-capture__input::placeholder {
 
 .perlite-upnext__actions {
   display: flex;
-  gap: var(--size-4-2);
+  gap: 6px;
 }
 
 /* ---- Groups and rows ---------------------------------------------------------------- */
-.perlite-group {
-  margin-top: var(--size-4-3);
-}
-
 .perlite-group__head {
   display: flex;
   align-items: center;
-  gap: var(--size-4-2);
-  padding: var(--size-4-1) var(--size-4-2);
+  gap: 7px;
+  padding: 14px 10px 4px;
   color: var(--text-muted);
-  font-size: var(--font-ui-small);
+  font-size: var(--font-ui-smaller);
   font-weight: var(--font-semibold);
+}
+
+.perlite-group__name {
+  color: var(--text-normal);
 }
 
 .perlite-group__icon {
@@ -835,31 +928,25 @@ textarea.perlite-capture__input::placeholder {
 }
 
 .perlite-group__icon svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .perlite-group__prefix {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-weight: var(--font-normal);
 }
 
-.perlite-group__count,
-.perlite-column__count {
+.perlite-group__count {
   margin-left: auto;
-  padding: 0 var(--size-4-2);
-  border-radius: var(--radius-s);
-  background-color: var(--background-modifier-hover);
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
   font-variant-numeric: tabular-nums;
 }
 
 .perlite-row {
   display: flex;
-  align-items: flex-start;
-  gap: var(--size-4-1);
-  padding: var(--size-4-1) var(--size-4-2) var(--size-4-1) 0;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px 0 2px;
   border-radius: var(--radius-m);
   cursor: pointer;
 }
@@ -880,7 +967,7 @@ button.perlite-row__toggle {
   align-items: center;
   justify-content: center;
   width: 32px;
-  height: 32px;
+  height: 36px;
   padding: 0;
   border: none;
   background: transparent;
@@ -894,28 +981,35 @@ button.perlite-row__toggle:disabled {
 }
 
 .perlite-row__body {
+  display: flex;
   flex: 1 1 auto;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
-  padding: 5px 0;
+  min-height: 36px;
 }
 
 .perlite-row__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text-normal);
-  line-height: 1.4;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .perlite-row.is-done .perlite-row__title,
-.perlite-card.is-done button.perlite-card__title {
+.perlite-card.is-done .perlite-card__title {
   color: var(--text-muted);
   text-decoration: line-through;
 }
 
 .perlite-row__meta {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
-  gap: 2px var(--size-4-2);
-  margin-top: 2px;
+  gap: 10px;
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
@@ -925,19 +1019,48 @@ button.perlite-row__toggle:disabled {
 }
 
 .perlite-row__icon svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 
 .perlite-row__tags {
   color: var(--text-accent);
 }
 
+/* A narrow pane (mobile, a sidebar-width split) puts the meta under the title. */
+@container (max-width: 520px) {
+  .perlite-main__body {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .perlite-row__body {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    padding: 7px 0;
+  }
+
+  .perlite-row__title {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .perlite-row__meta {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+}
+
 .perlite-pill {
-  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
   border-radius: var(--radius-s);
   background-color: var(--background-secondary);
   color: var(--text-muted);
+  font-weight: var(--font-semibold);
   white-space: nowrap;
 }
 
@@ -947,10 +1070,22 @@ button.perlite-row__toggle:disabled {
 }
 
 .perlite-pill--priority {
-  color: var(--perlite-ring, var(--text-muted));
+  font-weight: var(--font-normal);
 }
 
-/* The ring: priority colour; done = accent fill + check; in progress = accent dot. */
+.perlite-pill__icon {
+  display: inline-flex;
+  color: var(--perlite-ring);
+}
+
+.perlite-pill__icon svg {
+  width: 10px;
+  height: 10px;
+  stroke-width: 2.8;
+}
+
+/* The ring: priority colour; done = accent fill + check; in progress = a dot of the
+ * ring's own colour. */
 .perlite-ring,
 .perlite-pill--priority {
   --perlite-ring: var(--text-faint);
@@ -992,28 +1127,23 @@ button.perlite-row__toggle:disabled {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border: 2px solid var(--perlite-ring);
   border-radius: 50%;
   color: var(--text-on-accent);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .perlite-ring svg {
-  width: 11px;
-  height: 11px;
-  stroke-width: 3;
+  width: 10px;
+  height: 10px;
+  stroke-width: 3.6;
 }
 
 .perlite-ring[data-status="done"] {
   border-color: var(--interactive-accent);
   background-color: var(--interactive-accent);
-}
-
-.perlite-ring[data-status="doing"],
-.perlite-ring[data-status="custom"] {
-  border-color: var(--interactive-accent);
 }
 
 .perlite-ring[data-status="cancelled"] {
@@ -1022,10 +1152,10 @@ button.perlite-row__toggle:disabled {
 }
 
 .perlite-ring__dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background-color: var(--interactive-accent);
+  background-color: var(--perlite-ring);
 }
 
 button.perlite-row__toggle:not(:disabled):hover .perlite-ring {
@@ -1035,20 +1165,22 @@ button.perlite-row__toggle:not(:disabled):hover .perlite-ring {
 /* ---- Board -------------------------------------------------------------------------- */
 .perlite-board {
   display: flex;
-  align-items: flex-start;
-  gap: var(--size-4-3);
+  flex: 1 1 auto;
+  gap: 10px;
+  min-height: 0;
+  padding: 0 20px 20px;
   overflow-x: auto;
-  padding-bottom: var(--size-4-3);
+  overflow-y: hidden;
 }
 
 .perlite-column {
   display: flex;
-  flex: 0 0 280px;
+  flex: 0 0 236px;
   flex-direction: column;
-  max-height: calc(100vh - 220px);
-  border: 2px solid transparent;
+  min-height: 0;
   border-radius: var(--radius-l);
   background-color: var(--background-secondary);
+  transition: background-color 0.15s ease;
 }
 
 .perlite-column.is-drop-target,
@@ -1056,15 +1188,17 @@ button.perlite-board__folded.is-drop-target,
 .perlite-cal-day.is-drop-target,
 .perlite-cal-cell.is-drop-target,
 .perlite-cal-tray.is-drop-target {
-  border-color: var(--interactive-accent);
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
   background-color: hsla(var(--interactive-accent-hsl), 0.1);
 }
 
 .perlite-column__head {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: var(--size-4-2);
-  padding: var(--size-4-3) var(--size-4-3) var(--size-4-2);
+  gap: 7px;
+  padding: 10px 8px 6px 12px;
 }
 
 .perlite-column__icon {
@@ -1072,65 +1206,84 @@ button.perlite-board__folded.is-drop-target,
   color: var(--text-muted);
 }
 
-.perlite-column[data-tone="doing"] .perlite-column__icon {
+[data-tone="doing"] > .perlite-column__icon,
+[data-tone="doing"] > .perlite-column__head .perlite-column__icon {
   color: var(--text-accent);
 }
 
-.perlite-column[data-tone="done"] .perlite-column__icon {
+[data-tone="done"] > .perlite-column__icon,
+[data-tone="done"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-green);
 }
 
-.perlite-column[data-tone="highest"] .perlite-column__icon {
+[data-tone="highest"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-red);
 }
 
-.perlite-column[data-tone="high"] .perlite-column__icon {
+[data-tone="high"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-orange);
 }
 
-.perlite-column[data-tone="medium"] .perlite-column__icon {
+[data-tone="medium"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-yellow);
 }
 
-.perlite-column[data-tone="low"] .perlite-column__icon {
+[data-tone="low"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-blue);
 }
 
-.perlite-column[data-tone="lowest"] .perlite-column__icon {
+[data-tone="lowest"] > .perlite-column__head .perlite-column__icon {
   color: var(--color-cyan);
 }
 
 .perlite-column__icon svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 
 .perlite-column__name {
   margin: 0;
   font-size: var(--font-ui-small);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
 }
 
 .perlite-column__count {
-  margin-left: 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
 }
 
 .perlite-column__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary-alt);
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: 11px;
+}
+
+button.perlite-column__fold {
+  width: 24px;
+  height: 24px;
   margin-left: auto;
   color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
 }
 
 .perlite-column__cards {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--size-4-2);
+  gap: 6px;
+  min-height: 0;
+  padding: 2px 6px 10px;
   overflow-y: auto;
-  padding: 0 var(--size-4-2) var(--size-4-3);
 }
 
 .perlite-column__empty {
-  padding: var(--size-4-4) 0;
+  padding: 16px 0;
   color: var(--text-faint);
   font-size: var(--font-ui-smaller);
   text-align: center;
@@ -1141,11 +1294,11 @@ button.perlite-board__folded {
   flex: 0 0 44px;
   flex-direction: column;
   align-items: center;
-  gap: var(--size-4-2);
-  height: auto;
-  min-height: 200px;
-  padding: var(--size-4-3) 0;
-  border: 2px solid transparent;
+  justify-content: flex-start;
+  gap: 10px;
+  height: 100%;
+  padding: 14px 0 0;
+  border: none;
   border-radius: var(--radius-l);
   background-color: var(--background-secondary);
   box-shadow: none;
@@ -1156,17 +1309,24 @@ button.perlite-board__folded {
 .perlite-board__folded-label {
   writing-mode: vertical-rl;
   font-size: var(--font-ui-smaller);
+  font-weight: var(--font-bold);
 }
 
 .perlite-card {
+  position: relative;
   display: flex;
+  flex: none;
   align-items: flex-start;
   gap: 2px;
-  padding: var(--size-4-1) var(--size-4-1) var(--size-4-1) 0;
+  padding: 9px 6px 8px 4px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-primary);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.15s ease;
+}
+
+.perlite-card[draggable="true"] {
+  cursor: grab;
 }
 
 .perlite-card:hover {
@@ -1174,18 +1334,42 @@ button.perlite-board__folded {
 }
 
 .perlite-card.is-dragging {
-  opacity: 0.35;
+  opacity: 0.4;
+}
+
+.perlite-card button.perlite-row__toggle {
+  width: 26px;
+  height: 26px;
+  margin-top: -4px;
+}
+
+.perlite-card .perlite-ring {
+  width: 15px;
+  height: 15px;
+}
+
+.perlite-card .perlite-ring svg {
+  width: 9px;
+  height: 9px;
+  stroke-width: 3.8;
+}
+
+.perlite-card .perlite-ring__dot {
+  width: 5px;
+  height: 5px;
 }
 
 .perlite-card__main {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
-  padding: 5px 0;
 }
 
 button.perlite-card__title,
 button.perlite-card__select {
-  display: block;
+  display: flex;
   width: 100%;
   height: auto;
   padding: 0;
@@ -1194,36 +1378,88 @@ button.perlite-card__select {
   box-shadow: none;
   color: var(--text-normal);
   font-size: var(--font-ui-small);
-  line-height: 1.4;
+  font-weight: var(--font-semibold);
+  line-height: 18px;
   text-align: left;
+  text-wrap: pretty;
   white-space: normal;
   cursor: pointer;
 }
 
+button.perlite-card__title {
+  display: block;
+}
+
+button.perlite-card__select {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 3px;
+}
+
+.perlite-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-normal);
+}
+
+.perlite-card__meta .perlite-pill {
+  padding: 0 6px;
+}
+
+.perlite-card__meta .perlite-row__icon svg {
+  width: 11px;
+  height: 11px;
+}
+
 .perlite-card__crumb {
-  margin-top: 2px;
+  overflow: hidden;
   color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.perlite-card__more {
-  opacity: 0;
+button.perlite-card__more {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  color: var(--text-faint);
 }
 
-.perlite-card:hover .perlite-card__more,
-.perlite-card__more:focus-visible,
-.is-mobile .perlite-card__more {
-  opacity: 1;
+button.perlite-card__more svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ---- Calendar ----------------------------------------------------------------------- */
+.perlite-cal-toolbar {
+  padding-bottom: 12px;
+}
+
+.perlite-cal-toolbar__lead {
+  display: flex;
+  flex: 1 1 280px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .perlite-cal-toolbar__titles {
-  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-right: 4px;
 }
 
 .perlite-cal-toolbar__title {
-  font-size: var(--font-ui-large);
-  font-weight: var(--font-semibold);
+  font-size: 18px;
+  font-weight: var(--font-bold);
+  line-height: 24px;
 }
 
 .perlite-cal-toolbar__subtitle {
@@ -1234,27 +1470,90 @@ button.perlite-card__select {
 .perlite-cal-toolbar__nav {
   display: inline-flex;
   align-items: center;
-  gap: var(--size-4-1);
+  gap: 8px;
 }
 
 .perlite-cal {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: var(--size-4-3);
-  align-items: start;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-height: 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.perlite-cal__grid {
+  flex: 999 1 620px;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  padding: 12px 14px 32px 20px;
+  overflow: auto;
 }
 
 .perlite-cal-week {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--size-4-2);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0 6px;
+  height: 100%;
+  min-width: 720px;
+}
+
+.perlite-cal-day__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 6px 8px;
+}
+
+.perlite-cal-day__dow {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.perlite-cal-day__head.is-today .perlite-cal-day__dow {
+  color: var(--text-accent);
+}
+
+.perlite-cal-day__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: var(--font-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.perlite-cal-day__head.is-today .perlite-cal-day__num {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.perlite-cal-day__load {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .perlite-cal-day {
-  min-height: 320px;
-  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 0;
+  padding: 5px;
+  overflow-y: auto;
   border-radius: var(--radius-l);
   background-color: var(--background-secondary);
+  transition: background-color 0.15s ease;
 }
 
 .perlite-cal-day.is-weekend {
@@ -1265,84 +1564,85 @@ button.perlite-card__select {
   background-color: hsla(var(--interactive-accent-hsl), 0.1);
 }
 
-.perlite-cal-day__head {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--size-4-2) 0;
-}
-
-.perlite-cal-day__dow {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-}
-
-.perlite-cal-day.is-today .perlite-cal-day__dow {
-  color: var(--text-accent);
-}
-
-.perlite-cal-day__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-weight: var(--font-semibold);
-}
-
-.perlite-cal-day.is-today .perlite-cal-day__num {
-  background-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-
-.perlite-cal-day__load {
-  min-height: 1.2em;
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
-}
-
-.perlite-cal-day__items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--size-4-1);
-  padding: 0 var(--size-4-1) var(--size-4-2);
+.perlite-card--calendar {
+  padding: 7px 8px 7px 4px;
 }
 
 .perlite-card--calendar button.perlite-row__toggle {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
+  margin-top: -3px;
 }
 
 .perlite-card--calendar .perlite-ring {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
+}
+
+.perlite-card--calendar .perlite-ring svg {
+  width: 8px;
+  height: 8px;
+  stroke-width: 4;
+}
+
+.perlite-card--calendar .perlite-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  line-height: 16px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.perlite-card--calendar .perlite-card__meta {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.perlite-card--calendar .perlite-card__meta .perlite-pill {
+  height: auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-weight: var(--font-bold);
+}
+
+.perlite-card--calendar .perlite-row__note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .perlite-cal-month {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--size-4-1);
+  gap: 5px;
+  min-width: 720px;
 }
 
 .perlite-cal-month__dow {
-  padding-bottom: var(--size-4-1);
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
-  text-align: center;
+  padding: 2px 6px 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .perlite-cal-cell {
-  min-height: 96px;
-  padding: var(--size-4-1);
-  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-sizing: border-box;
+  min-height: 112px;
+  padding: 5px;
   border-radius: var(--radius-m);
   background-color: var(--background-secondary);
 }
 
 .perlite-cal-cell.is-outside {
-  opacity: 0.55;
+  opacity: 0.45;
 }
 
 .perlite-cal-cell.is-today {
@@ -1351,14 +1651,17 @@ button.perlite-card__select {
 
 .perlite-cal-cell__num {
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
   justify-content: center;
-  width: 22px;
+  box-sizing: border-box;
+  min-width: 22px;
   height: 22px;
-  margin-bottom: 2px;
-  border-radius: 50%;
+  padding: 0 4px;
+  border-radius: 11px;
   font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
+  font-variant-numeric: tabular-nums;
 }
 
 .perlite-cal-cell.is-today .perlite-cal-cell__num {
@@ -1369,16 +1672,19 @@ button.perlite-card__select {
 .perlite-cal-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 4px;
+  gap: 6px;
+  height: 21px;
+  padding: 0 6px;
+  border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
-  font-size: var(--font-ui-smaller);
+  background-color: var(--background-primary);
+  font-size: 11px;
   cursor: pointer;
   --perlite-ring: var(--text-faint);
 }
 
 .perlite-cal-chip:hover {
-  background-color: var(--background-modifier-hover);
+  box-shadow: var(--shadow-s);
 }
 
 .perlite-cal-chip.is-done {
@@ -1386,77 +1692,161 @@ button.perlite-card__select {
   text-decoration: line-through;
 }
 
+.perlite-cal-chip.is-done .perlite-cal-chip__dot {
+  background-color: var(--interactive-accent);
+}
+
 .perlite-cal-chip__dot {
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: var(--perlite-ring);
 }
 
 .perlite-cal-chip__title {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 button.perlite-cal-cell__more {
+  align-self: flex-start;
   height: auto;
-  padding: 0 4px;
+  padding: 0 6px;
   border: none;
   background: transparent;
   box-shadow: none;
   color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
   cursor: pointer;
 }
 
 .perlite-cal-tray {
   display: flex;
+  flex: 1 1 232px;
   flex-direction: column;
-  gap: var(--size-4-2);
-  padding: var(--size-4-3);
-  border: 2px solid var(--background-modifier-border);
-  border-radius: var(--radius-l);
-  background-color: var(--background-primary);
+  gap: 6px;
+  box-sizing: border-box;
+  max-width: 100%;
+  height: 100%;
+  padding: 14px 12px 40px;
+  overflow-y: auto;
+  border-left: 1px solid var(--background-modifier-border);
+  transition: background-color 0.15s ease;
 }
 
 .perlite-cal-tray__head {
   display: flex;
-  align-items: center;
-  gap: var(--size-4-2);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px;
 }
 
 .perlite-cal-tray__head h2 {
   margin: 0;
   font-size: var(--font-ui-small);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
 }
 
-.perlite-cal-tray__hint {
-  margin: 0;
-  color: var(--text-faint);
+.perlite-cal-tray__count {
+  color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
 
-@media (max-width: 900px) {
+.perlite-cal-tray__hint {
+  margin: 0 4px 6px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 17px;
+}
+
+.perlite-cal-tray .perlite-card--calendar {
+  padding: 8px 8px 8px 4px;
+}
+
+/* Too narrow for grid and tray side by side: the tray goes under the grid. Narrower
+ * still (mobile): the week becomes a list of days. */
+@container (max-width: 880px) {
   .perlite-cal {
-    grid-template-columns: minmax(0, 1fr);
+    flex-direction: column;
+    flex-wrap: nowrap;
   }
 
-  .perlite-cal-week {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .perlite-cal-day {
+  .perlite-cal__grid {
+    flex: 1 1 auto;
+    height: auto;
     min-height: 0;
   }
 
-  .perlite-cal-day__head {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: var(--size-4-2);
-    padding: var(--size-4-2) var(--size-4-3);
+  .perlite-cal-tray {
+    flex: none;
+    height: auto;
+    max-height: 40%;
+    padding-bottom: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+    border-left: none;
+  }
+}
+
+@container (max-width: 560px) {
+  .perlite-toolbar--pane {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .perlite-board {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .perlite-cal__grid {
+    padding: 8px 12px 16px;
+  }
+
+  .perlite-cal-week {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: auto;
+    min-width: 0;
+  }
+
+  .perlite-cal-week > .perlite-cal-day__head {
+    display: none;
+  }
+
+  .perlite-cal-day {
+    min-height: 44px;
+    overflow: visible;
+  }
+
+  .perlite-cal-day::before {
+    content: attr(aria-label);
+    padding: 2px 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: var(--font-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .perlite-cal-day.is-today::before {
+    color: var(--text-accent);
+  }
+
+  .perlite-cal-month {
+    min-width: 0;
+  }
+
+  .perlite-cal-cell {
+    min-height: 64px;
+  }
+
+  .perlite-cal-chip__title {
+    display: none;
   }
 }
 
@@ -1490,30 +1880,35 @@ button.perlite-cal-cell__more {
 
 /* ---- Lenses sidebar ----------------------------------------------------------------- */
 .perlite-lenses {
-  padding: var(--size-4-2);
+  padding: 12px 8px;
+}
+
+.perlite-lenses__group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .perlite-lenses__group + .perlite-lenses__group {
-  margin-top: var(--size-4-4);
+  margin-top: 18px;
 }
 
 .perlite-lenses__heading {
-  margin: 0 0 var(--size-4-1);
-  padding: 0 var(--size-4-2);
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.04em;
+  margin: 0 8px 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.6px;
   text-transform: uppercase;
 }
 
 button.perlite-lenses__item {
   display: flex;
   align-items: center;
-  gap: var(--size-4-2);
+  gap: 8px;
   width: 100%;
-  height: auto;
-  padding: var(--size-4-1) var(--size-4-2);
+  height: 28px;
+  padding: 0 8px;
   border: none;
   border-radius: var(--radius-s);
   background: transparent;
@@ -1522,6 +1917,13 @@ button.perlite-lenses__item {
   font-size: var(--font-ui-small);
   text-align: left;
   cursor: pointer;
+}
+
+/* The built-in lenses (the first, unheaded group) read a step stronger than tags and
+ * notes, as in the artboard. */
+nav.perlite-lenses__group button.perlite-lenses__item {
+  height: 30px;
+  font-weight: var(--font-semibold);
 }
 
 button.perlite-lenses__item:hover,
@@ -1540,6 +1942,15 @@ button.perlite-lenses__item[aria-current="page"] {
   height: 15px;
 }
 
+.perlite-lenses__group:not(nav) .perlite-lenses__icon {
+  color: var(--text-faint);
+}
+
+.perlite-lenses__group:not(nav) .perlite-lenses__icon svg {
+  width: 13px;
+  height: 13px;
+}
+
 .perlite-lenses__name {
   flex: 1 1 auto;
   min-width: 0;
@@ -1549,12 +1960,13 @@ button.perlite-lenses__item[aria-current="page"] {
 }
 
 .perlite-lenses__prefix {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .perlite-lenses__count {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: var(--font-ui-smaller);
+  font-weight: var(--font-normal);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1571,26 +1983,25 @@ button.perlite-lenses__more {
 }
 
 .perlite-mini {
-  margin-bottom: var(--size-4-4);
-  padding: var(--size-4-2);
-  border-radius: var(--radius-m);
-  background-color: var(--background-primary);
+  margin-bottom: 18px;
+  padding: 0 4px;
 }
 
 .perlite-mini__head {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  margin-bottom: var(--size-4-1);
+  margin-bottom: 6px;
   font-size: var(--font-ui-small);
 }
 
 .perlite-mini__title {
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-bold);
 }
 
 .perlite-mini__field {
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
 .perlite-mini__grid {
@@ -1601,7 +2012,8 @@ button.perlite-lenses__more {
 
 .perlite-mini__dow {
   color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  font-size: 10px;
+  font-weight: var(--font-bold);
   text-align: center;
 }
 
@@ -1649,52 +2061,92 @@ button.perlite-mini__day.has-tasks::after {
 .perlite-task-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--size-4-4);
-  padding: var(--size-4-3);
+  gap: 14px;
+  padding: 16px 14px 48px;
 }
 
 .perlite-task-panel__empty {
-  padding: var(--size-4-6) var(--size-4-2);
-  color: var(--text-faint);
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-muted);
   font-size: var(--font-ui-small);
   text-align: center;
 }
 
+.perlite-task-panel__head,
+.perlite-task-panel__block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.perlite-task-panel__head {
+  gap: 4px;
+}
+
 .perlite-task-panel__where,
 .perlite-task-panel__label {
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-bold);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
 .perlite-task-panel__title {
-  margin-top: 2px;
-  font-size: var(--font-ui-medium);
-  font-weight: var(--font-semibold);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 23px;
+  text-wrap: pretty;
 }
 
-.perlite-task-panel__label {
-  margin-bottom: var(--size-4-1);
-  font-weight: var(--font-semibold);
+/* The sidebar is already `--background-secondary`; its segmented controls sit a step
+ * darker so the selected option's lift still reads. */
+.perlite-task-panel .perlite-segmented {
+  background-color: var(--background-secondary-alt);
+}
+
+.perlite-task-panel .perlite-segmented--fill {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.perlite-task-panel .perlite-segmented:not(.perlite-segmented--stacked) button.perlite-segmented__option {
+  font-size: 11px;
 }
 
 .perlite-task-panel__md {
   display: block;
-  padding: var(--size-4-2);
-  border-radius: var(--radius-s);
-  background-color: var(--background-secondary);
+  padding: 9px 11px;
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary-alt);
+  color: var(--text-normal);
+  line-height: 18px;
 }
 
-.perlite-task-panel__open {
+a.perlite-task-panel__open {
   display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  gap: 4px;
-  margin-top: var(--size-4-2);
-  font-size: var(--font-ui-smaller);
+  gap: 6px;
+  height: 28px;
+  color: var(--text-accent);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+  text-decoration: none;
+}
+
+a.perlite-task-panel__open:hover {
+  opacity: 0.85;
 }
 
 .perlite-task-panel__open svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 
 button.perlite-segmented__option[data-priority="highest"][aria-checked="true"] .perlite-segmented__icon {
@@ -1720,18 +2172,20 @@ button.perlite-segmented__option[data-priority="lowest"][aria-checked="true"] .p
 .perlite-fields {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-m);
+  border-radius: var(--radius-l);
+  background-color: var(--background-primary);
 }
 
 .perlite-field {
   display: flex;
   align-items: center;
-  gap: var(--size-4-2);
+  gap: 10px;
   width: 100%;
   height: auto;
-  min-height: 40px;
-  padding: var(--size-4-1) var(--size-4-2);
+  min-height: 38px;
+  padding: 0 10px;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -1767,14 +2221,14 @@ button.perlite-field:not(:disabled):hover {
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-s);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
 }
 
 .perlite-field__tile svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
 .perlite-field__tile[data-tone="red"] {
@@ -1815,6 +2269,7 @@ button.perlite-field:not(:disabled):hover {
   max-width: 60%;
   overflow: hidden;
   color: var(--text-normal);
+  font-weight: var(--font-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1829,11 +2284,23 @@ button.perlite-field:not(:disabled):hover {
 
 /* ---- Quick add modal ---------------------------------------------------------------- */
 .perlite-quickadd {
-  width: min(640px, 92vw);
+  width: min(620px, calc(100vw - 32px));
+  padding: 20px 22px 18px;
+}
+
+.perlite-quickadd .modal-title {
+  font-size: 17px;
+  font-weight: var(--font-bold);
+}
+
+.perlite-quickadd .modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .perlite-quickadd .perlite-capture {
-  padding: var(--size-4-2) var(--size-4-3);
+  padding: 10px 12px;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
   background-color: var(--background-modifier-form-field);
@@ -1841,26 +2308,35 @@ button.perlite-field:not(:disabled):hover {
 
 .perlite-quickadd .perlite-capture:focus-within {
   border-color: var(--background-modifier-border-focus);
+  box-shadow: 0 0 0 2px hsla(var(--interactive-accent-hsl), 0.22);
+}
+
+.perlite-quickadd .perlite-capture > .perlite-capture__mirror,
+.perlite-quickadd .perlite-capture > textarea.perlite-capture__input {
+  min-height: 52px;
+  font-size: 18px;
+  font-weight: var(--font-medium);
+  line-height: 26px;
 }
 
 .perlite-quickadd__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--size-4-1);
-  min-height: 28px;
-  margin: var(--size-4-3) 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
 }
 
 .perlite-quickadd__hint {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
 
 button.perlite-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  height: 26px;
+  gap: 5px;
+  height: 24px;
   padding: 0 6px 0 8px;
   border: none;
   border-radius: var(--radius-s);
@@ -1880,15 +2356,40 @@ button.perlite-chip svg {
   opacity: 0.6;
 }
 
+.perlite-chip__x svg {
+  width: 10px;
+  height: 10px;
+  stroke-width: 2.8;
+}
+
 .perlite-quickadd__props {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--size-4-2);
+  gap: 6px;
 }
 
 .perlite-quickadd__props .perlite-field {
-  border: 1px solid var(--background-modifier-border);
+  justify-content: flex-start;
+  box-sizing: border-box;
+  min-height: 58px;
+  padding: 9px 10px;
   border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+}
+
+.perlite-quickadd__props button.perlite-field:not(:disabled):hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.perlite-quickadd__props .perlite-field__tile {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+}
+
+.perlite-quickadd__props .perlite-field__tile svg {
+  width: 14px;
+  height: 14px;
 }
 
 .perlite-field__text {
@@ -1898,29 +2399,41 @@ button.perlite-chip svg {
 }
 
 .perlite-field__text .perlite-field__name {
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
 }
 
 .perlite-field__text .perlite-field__value {
   max-width: none;
+  font-size: 14px;
 }
 
 .perlite-quickadd__preview {
-  margin-top: var(--size-4-3);
-  padding: var(--size-4-2) var(--size-4-3);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px;
   border-radius: var(--radius-m);
-  background-color: var(--background-secondary);
+  background-color: var(--background-secondary-alt);
+}
+
+.perlite-quickadd__preview code {
+  overflow: hidden;
+  color: var(--text-normal);
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .perlite-quickadd__appends {
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
 }
 
 .perlite-quickadd__dest {
-  color: var(--text-normal);
-  font-weight: var(--font-semibold);
+  color: var(--text-accent);
 }
 
 .perlite-quickadd__footer {
@@ -1928,15 +2441,31 @@ button.perlite-chip svg {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--size-4-2);
-  margin-top: var(--size-4-4);
+  gap: 10px 14px;
+  padding-top: 2px;
 }
 
 .perlite-quickadd__footer .prompt-instructions {
   display: flex;
+  flex: 1 1 260px;
   flex-wrap: wrap;
-  gap: var(--size-4-3);
+  justify-content: flex-start;
+  gap: 4px 12px;
   padding: 0;
+  border-top: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.perlite-quickadd__footer .prompt-instruction-command {
+  color: var(--text-normal);
+  font-weight: var(--font-bold);
+}
+
+.perlite-quickadd__footer .modal-button-container button {
+  height: 30px;
+  padding: 0 14px;
+  font-size: var(--font-ui-small);
 }
 
 .perlite-quickadd__footer .modal-button-container {

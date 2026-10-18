@@ -185,7 +185,14 @@ should come from the theme; nothing should look hard-coded.
       note, Enter adds and stays open, Cmd/Ctrl+Enter adds and closes.
 - [ ] Status bar shows "Perlite: N left today"; clicking it opens Today.
 - [ ] Keyboard only: every control in the tab and both sidebars shows a focus ring.
-- [ ] Narrow pane: the header, toolbars and calendar wrap instead of clipping.
+- [ ] Narrow pane: the header, toolbars and calendar wrap instead of clipping. Below
+      ~520px the list's rows put tags and the due pill under the title; below ~560px
+      the calendar week becomes a list of days; below ~880px the "No … date" tray moves
+      under the grid.
+- [ ] Board and Calendar fill the pane: the columns/days run to the bottom and scroll
+      on their own (the pane itself doesn't scroll), and their toolbar carries the
+      List / Board / Calendar switch. Long list titles end in "…" with the full title
+      on hover.
 
 ### Mobile (isDesktopOnly is false — this matters)
 

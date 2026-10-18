@@ -1,5 +1,6 @@
 import { ItemView, setIcon, type WorkspaceLeaf } from "obsidian";
 import { AddTagModal } from "../AddTagModal.js";
+import { PRIORITY_ICON } from "../design/priorityIcon.js";
 import { relativeDayLabel } from "../design/relativeDay.js";
 import { dateValueCalendarDate } from "../model/DateValue.js";
 import type { Priority } from "../model/Priority.js";
@@ -31,14 +32,6 @@ const STATUS_OPTIONS: readonly [StatusChoice, string][] = [
 
 const PRIORITY_ORDER: readonly Priority[] = ["normal", "lowest", "low", "medium", "high", "highest"];
 const PRIORITY_SHORT: Readonly<Record<Priority, string>> = { normal: "None", lowest: "Lowest", low: "Low", medium: "Med", high: "High", highest: "Top" };
-const PRIORITY_ICON: Readonly<Record<Priority, string>> = {
-  normal: "minus",
-  lowest: "chevrons-down",
-  low: "chevron-down",
-  medium: "chevron-up",
-  high: "chevrons-up",
-  highest: "alert-triangle",
-};
 
 export class PerliteTaskView extends ItemView {
   private readonly plugin: PerlitePlugin;
@@ -150,7 +143,7 @@ export class PerliteTaskView extends ItemView {
     md.createDiv({ cls: "perlite-task-panel__label", text: "In the note" });
     md.createEl("code", { cls: "perlite-task-panel__md", text: task.raw.trim() });
     const open = md.createEl("a", { cls: "perlite-task-panel__open", text: `Open ${entry.file.name} at line ${(task.location?.lineIndex ?? 0) + 1}`, href: "#" });
-    setIcon(open.createSpan(), "arrow-up-right");
+    setIcon(open.createSpan(), "arrow-right");
     open.addEventListener("click", (event) => {
       event.preventDefault();
       void openTaskNote(this.app, entry, "tab");

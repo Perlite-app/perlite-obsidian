@@ -1,6 +1,7 @@
 import { AbstractInputSuggest, App, FuzzySuggestModal, Modal, Notice, Platform, setIcon, type TFile } from "obsidian";
 import { buildQuickAddTaskLine, quickAddSpans, type QuickAddResult } from "./capture/QuickAddParser.js";
 import { relativeDayLabel } from "./design/relativeDay.js";
+import { calendarDateToISOString } from "./model/CalendarDate.js";
 import { allTags } from "./model/ParsedTask.js";
 import { priorityTitle, splitNotePath, type LensCaptureDefaults } from "./query/lenses.js";
 import { parserConfiguration } from "./settings.js";
@@ -153,10 +154,10 @@ export class QuickCaptureModal extends Modal {
       textEl.createSpan({ cls: "perlite-field__value", text: value });
       if (onClick !== undefined) el.addEventListener("click", onClick);
     };
-    tile("Due", "calendar", "red", result.dueDate !== null ? relativeDayLabel(result.dueDate, today) : "No date", result.dueDate === null);
+    tile("Due", "calendar", "red", result.dueDate !== null ? `${relativeDayLabel(result.dueDate, today)} · ${calendarDateToISOString(result.dueDate)}` : "No date", result.dueDate === null);
     tile("Priority", "flag", "orange", result.priority !== null && result.priority !== "normal" ? priorityTitle(result.priority) : "None", result.priority === null);
     tile("Repeat", "repeat", "cyan", result.recurrenceRule !== null ? capitalize(result.recurrenceRule) : "Never", result.recurrenceRule === null);
-    tile("Save to", "file", "purple", splitNotePath(this.destination).note, false, () =>
+    tile("Save to", "file", "purple", this.destination, false, () =>
       new NotePicker(this.app, (file) => {
         this.destination = file.path;
         this.update();
