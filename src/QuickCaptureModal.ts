@@ -7,6 +7,7 @@ import { priorityTitle, splitNotePath, type LensCaptureDefaults } from "./query/
 import { parserConfiguration } from "./settings.js";
 import { todayCalendarDate } from "./support/today.js";
 import { appendQuickAddTask } from "./write/appendQuickAddTask.js";
+import { parseDocument, type DocumentHeading } from "./parser/DocumentParser.js";
 import { parseWithDefaults, previewLine, renderCaptureField, type CaptureField } from "./view/main/captureField.js";
 import type PerlitePlugin from "./main.js";
 
@@ -26,6 +27,8 @@ export class QuickCaptureModal extends Modal {
   private readonly plugin: PerlitePlugin;
   private readonly defaults: LensCaptureDefaults | null;
   private destination: string;
+  /** Under this heading of `destination`, or at the end when null. Chosen with the note. */
+  private heading: DocumentHeading | null = null;
   private field: CaptureField | null = null;
   private suggest: TagSuggest | null = null;
   private chipsEl: HTMLElement | null = null;
@@ -157,30 +160,47 @@ export class QuickCaptureModal extends Modal {
     tile("Due", "calendar", "red", result.dueDate !== null ? `${relativeDayLabel(result.dueDate, today)} · ${calendarDateToISOString(result.dueDate)}` : "No date", result.dueDate === null);
     tile("Priority", "flag", "orange", result.priority !== null && result.priority !== "normal" ? priorityTitle(result.priority) : "None", result.priority === null);
     tile("Repeat", "repeat", "cyan", result.recurrenceRule !== null ? capitalize(result.recurrenceRule) : "Never", result.recurrenceRule === null);
-    tile("Save to", "file", "purple", this.destination, false, () =>
-      new NotePicker(this.app, (file) => {
-        this.destination = file.path;
-        this.update();
-      }).open(),
+    tile("Save to", "file", "purple", this.heading === null ? this.destination : `${this.destination} › ${this.heading.text}`, false, () =>
+      new NotePicker(this.app, (file) => void this.pickPlaceIn(file)).open(),
     );
 
     // The exact line.
     const preview = this.previewEl!;
     preview.empty();
     const head = preview.createDiv({ cls: "perlite-quickadd__appends" });
-    head.appendText("Appends to ");
-    head.createSpan({ cls: "perlite-quickadd__dest", text: this.destination });
+    if (this.heading === null) {
+      head.appendText("Appends to ");
+      head.createSpan({ cls: "perlite-quickadd__dest", text: this.destination });
+    } else {
+      head.appendText("Adds under ");
+      head.createSpan({ cls: "perlite-quickadd__dest", text: `${"#".repeat(this.heading.level)} ${this.heading.text}` });
+      head.appendText(" in ");
+      head.createSpan({ cls: "perlite-quickadd__dest", text: this.destination });
+    }
     preview.createEl("code", { text: previewLine(result, this.plugin.settings, today) ?? "- [ ] …" });
 
     const canAdd = result.description.trim().length > 0;
     if (this.addButton !== null) this.addButton.disabled = !canAdd;
   }
 
+  /** After a note is picked: where in it. A note with headings offers "End of note"
+   * and each heading (Perlite's own heading rules, the ones `insertEdit` finds them by). */
+  private async pickPlaceIn(file: TFile): Promise<void> {
+    const headings = parseDocument(await this.app.vault.cachedRead(file), file.path).headings;
+    const choose = (heading: DocumentHeading | null): void => {
+      this.destination = file.path;
+      this.heading = heading;
+      this.update();
+    };
+    if (headings.length === 0) choose(null);
+    else new HeadingPicker(this.app, file.basename, headings, choose).open();
+  }
+
   private async add(close: boolean): Promise<void> {
     const result = this.result();
     if (result.description.trim().length === 0) return;
     const task = buildQuickAddTaskLine(result, todayCalendarDate(), parserConfiguration(this.plugin.settings));
-    const added = await appendQuickAddTask(this.app, task, this.destination);
+    const added = await appendQuickAddTask(this.app, task, this.destination, this.heading);
     if (!added) return;
     await this.plugin.refreshAllViews();
     if (close) {
@@ -298,5 +318,30 @@ class NotePicker extends FuzzySuggestModal<TFile> {
 
   onChooseItem(file: TFile): void {
     this.onPick(file);
+  }
+}
+
+/** "Save to", second step: the end of the note or one of its headings, in note order. */
+class HeadingPicker extends FuzzySuggestModal<DocumentHeading | null> {
+  constructor(
+    app: App,
+    noteName: string,
+    private readonly headings: readonly DocumentHeading[],
+    private readonly onPick: (heading: DocumentHeading | null) => void,
+  ) {
+    super(app);
+    this.setPlaceholder(`Where in ${noteName}?`);
+  }
+
+  getItems(): (DocumentHeading | null)[] {
+    return [null, ...this.headings];
+  }
+
+  getItemText(heading: DocumentHeading | null): string {
+    return heading === null ? "End of note" : `${"#".repeat(heading.level)} ${heading.text}`;
+  }
+
+  onChooseItem(heading: DocumentHeading | null): void {
+    this.onPick(heading);
   }
 }

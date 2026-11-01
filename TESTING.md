@@ -189,6 +189,10 @@ dark. Those two items are ticked; the rest still want a hand check.
 - [ ] Quick add (**Perlite: New task**, no default hotkey): tinted field, `#` opens the
       tag popover (Tab or Enter accepts), chips remove their phrase, **Save to** picks a
       note, Enter adds and stays open, Cmd/Ctrl+Enter adds and closes.
+- [ ] Quick add **Save to** → a note with headings asks "Where in …?": pick a heading
+      and the task lands after the last line under it (before the next heading, of any
+      level); "End of note" appends as before. If the heading is renamed before you add,
+      you get a notice and nothing is written.
 - [ ] Status bar shows "Perlite: N left today"; clicking it opens Today.
 - [ ] Restart Obsidian with the Perlite tab open, click into a note, then pick a lens in
       the lenses sidebar: the existing Perlite tab switches (its header title too) and
