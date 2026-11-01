@@ -1,4 +1,5 @@
 import type { DocumentHeading, DocumentLine, LineEnding, ParsedDocument } from "../parser/DocumentParser.js";
+import type { CompletionResult } from "../recurrence/RecurrenceEngine.js";
 
 /**
  * A single line-level change to a document: replace one line, optionally insert a line
@@ -65,6 +66,22 @@ export class DocumentEditError extends Error {
 export interface AppendResult {
   readonly edit: DocumentEdit;
   readonly preferringLineIndex: number;
+}
+
+/** Where a recurring task's next instance goes relative to the completed task — the
+ * Tasks plugin's `recurrenceOnNextLine` setting, which defaults to above. */
+export type NextInstancePlacement = "above" | "below";
+
+/** Builds the edit that writes a completion: `line` (the task as last read) becomes
+ * `result.completedLine`, with the next instance, if any, on its own line above or below
+ * it. Above is still a replace plus an insert-after — the original line becomes the next
+ * instance and the completed line goes after it — so `applyEdit`, `inverseEdit` and undo
+ * need nothing new. */
+export function completionEdit(line: string, result: CompletionResult, placement: NextInstancePlacement = "above"): DocumentEdit {
+  if (result.nextInstanceLine === null) return { locate: line, replacement: result.completedLine };
+  return placement === "above"
+    ? { locate: line, replacement: result.nextInstanceLine, insert: result.completedLine }
+    : { locate: line, replacement: result.completedLine, insert: result.nextInstanceLine };
 }
 
 /** Builds the `DocumentEdit` that appends `newLine` as a new last line of `document`, by

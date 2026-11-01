@@ -101,7 +101,10 @@ plugin exception often shows there with nothing visible in the UI.
       directly and confirm the `[x]` and `✅ <date>` landed correctly, with nothing else
       in the file disturbed.
 - [ ] Completing the recurring daily task inserts a fresh `- [ ]` next-instance line
-      right after the original, with the due date advanced by one day.
+      right above the original, with the due date advanced by one day.
+- [ ] With the Tasks plugin enabled and its "next recurrence appearance" set to the line
+      below, completing it puts the next instance below instead; switching the setting
+      back takes effect on the next completion, with no reload.
 - [ ] Tapping a task row (not the checkbox) opens its source note at the right line.
 - [ ] **Settings → Perlite**: toggling the global filter off makes an untagged checkbox
       (no `#task`) appear; toggling a folder exclusion hides tasks from that folder.

@@ -3,7 +3,7 @@ import type { ParsedTask } from "../model/ParsedTask.js";
 import * as RecurrenceEngine from "../recurrence/RecurrenceEngine.js";
 import { parserConfiguration } from "../settings.js";
 import { todayCalendarDate } from "../support/today.js";
-import { DocumentEditError } from "../write/documentEditor.js";
+import { completionEdit, DocumentEditError, type NextInstancePlacement } from "../write/documentEditor.js";
 import { writeDocumentEdit } from "../write/vaultWriter.js";
 import type PerlitePlugin from "../main.js";
 
@@ -26,18 +26,30 @@ export async function completeTaskAndWrite(app: App, plugin: PerlitePlugin, task
   }
 
   try {
-    await writeDocumentEdit(
-      app,
-      file,
-      { locate: task.raw, replacement: result.completedLine, insert: result.nextInstanceLine ?? undefined },
-      task.location?.lineIndex ?? null,
-    );
+    const placement = result.nextInstanceLine === null ? "above" : await tasksNextInstancePlacement(app);
+    await writeDocumentEdit(app, file, completionEdit(task.raw, result, placement), task.location?.lineIndex ?? null);
   } catch (error) {
     new Notice(
       error instanceof DocumentEditError
         ? "Couldn't save — that task changed since Perlite last read this file."
         : "Couldn't save that change.",
     );
+  }
+}
+
+/** The Tasks plugin's own "next recurrence appearance" choice when it's enabled, so a task
+ * completed here lands where Tasks would have put it; above otherwise, Tasks' default.
+ * Tasks keeps its settings in a module, not on the plugin, so this reads its saved data —
+ * fresh each time, which also picks up a change made since Perlite loaded. */
+async function tasksNextInstancePlacement(app: App): Promise<NextInstancePlacement> {
+  const tasks = (app as App & { plugins?: { getPlugin?(id: string): { loadData(): Promise<unknown> } | null } }).plugins?.getPlugin?.(
+    "obsidian-tasks-plugin",
+  );
+  try {
+    const data = (await tasks?.loadData()) as { recurrenceOnNextLine?: unknown } | null | undefined;
+    return data?.recurrenceOnNextLine === true ? "below" : "above";
+  } catch {
+    return "above";
   }
 }
 

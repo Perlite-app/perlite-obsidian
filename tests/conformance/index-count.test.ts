@@ -7,6 +7,7 @@ import {
   mutationFixtures,
   recurrenceCompletionFixtures,
   insertionFixtures,
+  completionWriteFixtures,
 } from "./corpus.js";
 
 // Guards against a partial or empty corpus checkout silently going green — mirrors
@@ -21,7 +22,8 @@ describe("conformance/index", () => {
       documentFixtures().length +
       mutationFixtures().length +
       recurrenceCompletionFixtures().length +
-      insertionFixtures().length;
+      insertionFixtures().length +
+      completionWriteFixtures().length;
     const declared = totalDeclaredFixtures();
     const skipped = loadSkips().size;
 
