@@ -143,8 +143,10 @@ export class PerliteListView extends ItemView {
   private render(): void {
     const body = this.bodyEl;
     if (body === null) return;
-    // The tab title follows the lens.
+    // The tab title follows the lens. `updateHeader` only redraws the tab, so the view
+    // header's own title (the main title on mobile) is set here too.
     (this.leaf as WorkspaceLeaf & { updateHeader?: () => void }).updateHeader?.();
+    (this as unknown as { titleEl?: HTMLElement }).titleEl?.setText(this.getDisplayText());
     // A rescan (a vault change, often the write the user just made) rebuilds everything;
     // keep the user's place — the capture field's focus and caret, and the scroll.
     const input = this.capture?.inputEl ?? null;

@@ -325,7 +325,7 @@ export default class PerlitePlugin extends Plugin {
    * is what keeps re-tapping the same tag from spawning a second tab for it. */
   async openPerliteView(viewType: string, state?: Record<string, unknown>): Promise<void> {
     if (this.settings.singleTabNavigation) {
-      const leaf = this.perliteLeaf !== null && this.isLeafOpen(this.perliteLeaf) ? this.perliteLeaf : this.app.workspace.getLeaf(false);
+      const leaf = this.openPerliteLeaf() ?? this.app.workspace.getLeaf(false);
       this.perliteLeaf = leaf;
       await leaf.setViewState({ type: viewType, active: true, state });
       this.app.workspace.revealLeaf(leaf);
@@ -346,6 +346,16 @@ export default class PerlitePlugin extends Plugin {
    * direct `isOpen`/`isClosed` accessor). */
   private isLeafOpen(leaf: WorkspaceLeaf): boolean {
     return leaf.getRoot() === this.app.workspace.rootSplit;
+  }
+
+  /** The tab single-tab navigation reuses: the one it last used, or — after a restart,
+   * when `perliteLeaf` starts out empty — the Perlite tab Obsidian restored. Without the
+   * second lookup, `getLeaf(false)` hands back whatever tab was active (often a note),
+   * which then turns into a second Perlite tab. */
+  private openPerliteLeaf(): WorkspaceLeaf | null {
+    if (this.perliteLeaf !== null && this.isLeafOpen(this.perliteLeaf)) return this.perliteLeaf;
+    const restored = [PERLITE_LIST_VIEW_TYPE, PERLITE_SMART_LISTS_VIEW_TYPE].flatMap((type) => this.app.workspace.getLeavesOfType(type));
+    return restored.find((leaf) => this.isLeafOpen(leaf)) ?? null;
   }
 }
 
