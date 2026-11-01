@@ -1593,6 +1593,10 @@ button.perlite-card__more svg {
   line-height: 16px;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  /* Day columns get narrow (~100px with both sidebars open): break a long word rather
+   * than clip it mid-letter. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .perlite-card--calendar .perlite-card__meta {
@@ -2565,4 +2569,48 @@ button.perlite-mini__day.is-today:hover {
 
 .perlite-toast-host {
   position: relative;
+}
+
+/* Tablet Obsidian (iPad, and desktop's mobile emulation) pads every button with
+ * `.is-tablet button:not(.clickable-icon)` (4px 20px), which outranks the one-class
+ * `button.perlite-*` rules above: icon buttons lost their icon and card rings gained a
+ * 40px gap. This puts each rule's own padding back — keep the values in step with the
+ * rules above. */
+.is-tablet button.perlite-icon-button,
+.is-tablet button.perlite-row__toggle,
+.is-tablet button.perlite-card__title,
+.is-tablet button.perlite-card__select,
+.is-tablet button.perlite-mini__day {
+  padding: 0;
+}
+.is-tablet button.perlite-segmented__option {
+  padding: 0 10px;
+}
+.is-tablet .perlite-segmented--stacked button.perlite-segmented__option {
+  padding: 0 2px;
+}
+.is-tablet button.perlite-chips__chip,
+.is-tablet button.perlite-lenses__item {
+  padding: 0 8px;
+}
+.is-tablet button.perlite-button--outline {
+  padding: 0 9px;
+}
+.is-tablet button.perlite-button--ghost {
+  padding: 0 12px;
+}
+.is-tablet .perlite-upnext button.perlite-button {
+  padding: 0 14px;
+}
+.is-tablet button.perlite-board__folded {
+  padding: 14px 0 0;
+}
+.is-tablet button.perlite-cal-cell__more {
+  padding: 0 6px;
+}
+.is-tablet button.perlite-lenses__more {
+  padding: 2px var(--size-4-2);
+}
+.is-tablet button.perlite-chip {
+  padding: 0 6px 0 8px;
 }

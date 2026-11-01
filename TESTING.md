@@ -152,6 +152,12 @@ tab (List / Board / Calendar) plus two sidebar views. Run each item in a light *
 dark theme (and a third-party theme like **Minimal** if you have one) — every colour
 should come from the theme; nothing should look hard-coded.
 
+Already checked in a scratch Obsidian (1.8.3) on 2026-11-01, driven over the DevTools
+protocol: the Board and Calendar drag-and-drop items below (real HTML5 drags, line
+checked on disk, Undo), the ⋯ menu moves, phone and tablet layouts under
+`app.emulateMobile`, and the default, Minimal, Things and AnuPpuccin themes in light and
+dark. Those two items are ticked; the rest still want a hand check.
+
 - [ ] The ribbon icon opens the **Perlite** tab and adds **Perlite lenses** (left
       sidebar) and **Task** (right sidebar). The tab title is the lens name.
 - [ ] Lenses sidebar: Today / Upcoming / No date / High priority / All tasks, then smart
@@ -171,12 +177,12 @@ should come from the theme; nothing should look hard-coded.
 - [ ] Task sidebar: status To do / Doing / Done / Cancel write `[ ]` / `[/]` / `[x]` /
       `[-]`; Due / Scheduled / Starts open the date palette (try typing "next friday");
       Tags adds a tag; priority control writes the marker; "Open … at line N" works.
-- [ ] Board: columns by Status / Priority / Note; drag a card to another status or
+- [x] Board: columns by Status / Priority / Note; drag a card to another status or
       priority column and check the line on disk; the toast's **Undo** puts it back.
       Each card's ⋯ menu offers the same moves (this is the mobile path). Clicking a
       card title opens the note *beside* the board, reusing one split. Cancelled starts
       folded; Note columns don't accept drops.
-- [ ] Calendar: Week / Month; Place by 📅 / ⏳ / 🛫; drag a task to another day and
+- [x] Calendar: Week / Month; Place by 📅 / ⏳ / 🛫; drag a task to another day and
       check only that field changed; drag it to the **No … date** tray to remove the
       field; Undo. The lenses sidebar shows a mini month in Calendar mode — picking a
       day moves the week.
@@ -184,6 +190,9 @@ should come from the theme; nothing should look hard-coded.
       tag popover (Tab or Enter accepts), chips remove their phrase, **Save to** picks a
       note, Enter adds and stays open, Cmd/Ctrl+Enter adds and closes.
 - [ ] Status bar shows "Perlite: N left today"; clicking it opens Today.
+- [ ] Restart Obsidian with the Perlite tab open, click into a note, then pick a lens in
+      the lenses sidebar: the existing Perlite tab switches (its header title too) and
+      the note stays open — no second Perlite tab.
 - [ ] Keyboard only: every control in the tab and both sidebars shows a focus ring.
 - [ ] Narrow pane: the header, toolbars and calendar wrap instead of clipping. Below
       ~520px the list's rows put tags and the due pill under the title; below ~560px
@@ -199,7 +208,8 @@ should come from the theme; nothing should look hard-coded.
 - [ ] If you have Obsidian mobile available (iOS/Android) pointed at a synced copy of
       this same vault, install/enable Perlite there too and repeat at least the Wave 1
       checklist — this is what actually proves no Node/Electron-only API snuck in
-      anywhere in the code.
+      anywhere in the code. (Desktop's mobile emulation has been checked for layout —
+      phone and tablet — but it still runs Electron, so it proves nothing here.)
 
 ## 8. Reporting back
 

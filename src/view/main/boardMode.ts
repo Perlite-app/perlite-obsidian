@@ -70,10 +70,12 @@ export function renderBoardMode(body: HTMLElement, options: BoardModeOptions): v
 
   const openCount = entries.filter((entry) => isOpen(entry.task)).length;
   const doing = entries.filter((entry) => statusChoiceOf(entry.task) === "doing").length;
+  // Note columns are read-only (moving a line between notes isn't a write Perlite does).
+  const howToMove = columnsBy === "note" ? null : Platform.isMobile ? "use ⋯ to move" : "drag, or use ⋯ to move";
   const toolbar = body.createDiv({ cls: "perlite-toolbar perlite-toolbar--pane" });
   toolbar.createSpan({
     cls: "perlite-toolbar__count perlite-toolbar__summary",
-    text: `${openCount} open · ${doing} in progress · ${Platform.isMobile ? "use ⋯ to move" : "drag, or use ⋯ to move"}`,
+    text: [`${openCount} open`, `${doing} in progress`, howToMove].filter((part) => part !== null).join(" · "),
   });
   const picker = toolbar.createDiv({ cls: "perlite-chips", attr: { role: "radiogroup", "aria-label": "Columns" } });
   picker.createSpan({ cls: "perlite-chips__label", text: "Columns" });
