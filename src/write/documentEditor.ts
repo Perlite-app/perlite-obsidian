@@ -1,4 +1,4 @@
-import type { DocumentLine, LineEnding } from "../parser/DocumentParser.js";
+import type { DocumentHeading, DocumentLine, LineEnding, ParsedDocument } from "../parser/DocumentParser.js";
 
 /**
  * A single line-level change to a document: replace one line, optionally insert a line
@@ -57,7 +57,7 @@ export class DocumentEditError extends Error {
   }
 }
 
-/** What `appendEdit` needs the caller to carry through to `applyEdit`: the constructed
+/** What `appendEdit` and `insertEdit` need the caller to carry through to `applyEdit`: the constructed
  * edit itself, plus the exact index of the anchor line it locates — required because a
  * capture target file commonly ends with a blank or otherwise duplicated line, and
  * without `preferringLineIndex` the content-match tie-break in `applyEdit` would pick
@@ -83,6 +83,43 @@ export function appendEdit(newLine: string, document: LineDocument): AppendResul
     edit: { locate: lastLine.text, replacement: lastLine.text, insert: newLine },
     preferringLineIndex: document.lines.length - 1,
   };
+}
+
+/** Builds the edit that adds `newLine` under `heading`: right after the last non-blank
+ * line of the heading's own section, which runs to the next heading of *any* level (so
+ * the new task's nearest heading — its `parentHeading` — is this one, not a
+ * subheading's), or directly after the heading when that section is empty. A code fence
+ * that opens in the section and never closes ends the section where it opens: everything
+ * after it is code. Same shape as `appendEdit`, so `applyEdit` and undo need nothing new.
+ *
+ * `heading` is found again in `document` by level and text, the closest match to its
+ * `lineIndex` winning, so a heading read earlier still resolves after lines above it
+ * moved. Returns `null` when no such heading exists any more. 1:1 port of
+ * `DocumentEditor.insertEdit(_:under:in:)` in PerliteCore. */
+export function insertEdit(
+  newLine: string,
+  heading: DocumentHeading,
+  document: Pick<ParsedDocument, "lines" | "headings" | "unclosedFenceLineIndex">,
+): AppendResult | null {
+  let target: DocumentHeading | null = null;
+  for (const candidate of document.headings) {
+    if (candidate.level !== heading.level || candidate.text !== heading.text) continue;
+    if (target === null || Math.abs(candidate.lineIndex - heading.lineIndex) < Math.abs(target.lineIndex - heading.lineIndex)) target = candidate;
+  }
+  if (target === null) return null;
+  const targetLine = target.lineIndex;
+  let sectionEnd = document.headings.find((candidate) => candidate.lineIndex > targetLine)?.lineIndex ?? document.lines.length;
+  const fence = document.unclosedFenceLineIndex;
+  if (fence !== null && fence > targetLine) sectionEnd = Math.min(sectionEnd, fence);
+  let anchor = targetLine;
+  for (let index = sectionEnd - 1; index > targetLine; index--) {
+    if (document.lines[index]!.text.trim() !== "") {
+      anchor = index;
+      break;
+    }
+  }
+  const anchorText = document.lines[anchor]!.text;
+  return { edit: { locate: anchorText, replacement: anchorText, insert: newLine }, preferringLineIndex: anchor };
 }
 
 /** Outcome of `deleteEdit` — see that function's doc comment for what each case means

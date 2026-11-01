@@ -12,7 +12,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
 export const conformanceRoot = join(repoRoot, "conformance");
 
-type FixtureShape = "line" | "document" | "mutation" | "recurrence-completion";
+type FixtureShape = "line" | "document" | "mutation" | "recurrence-completion" | "insertion";
 
 interface ConformanceIndexCategory {
   name: string;
@@ -96,6 +96,10 @@ export function mutationFixtures<T extends { name: string }>(): Identified<T>[] 
 }
 export function recurrenceCompletionFixtures<T extends { name: string }>(): Identified<T>[] {
   return categoriesByShape("recurrence-completion").flatMap((c) => decodeCategory<T>(c));
+}
+
+export function insertionFixtures<T extends { name: string }>(): Identified<T>[] {
+  return categoriesByShape("insertion").flatMap((c) => decodeCategory<T>(c));
 }
 
 /** Total fixtures the corpus declares, independent of how many this implementation

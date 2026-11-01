@@ -10,6 +10,7 @@ import { fixtureConfigToParserConfiguration, type FixtureConfigJSON } from "./fi
 import { parseLine } from "../../src/parser/TaskLineParser.js";
 import { parseDocument, reserializeDocument } from "../../src/parser/DocumentParser.js";
 import * as TaskSerializer from "../../src/parser/TaskSerializer.js";
+import { appendEdit, applyEdit, insertEdit } from "../../src/write/documentEditor.js";
 import { complete } from "../../src/recurrence/RecurrenceEngine.js";
 import { allTags, type ParsedTask } from "../../src/model/ParsedTask.js";
 import { calendarDateToISOString, parseCalendarDate } from "../../src/model/CalendarDate.js";
@@ -30,7 +31,15 @@ type Case =
   | { readonly id: string; readonly kind: "line"; readonly input: string; readonly config: FixtureConfigJSON }
   | { readonly id: string; readonly kind: "document"; readonly content: string; readonly config: FixtureConfigJSON }
   | { readonly id: string; readonly kind: "mutation"; readonly input: string; readonly config: FixtureConfigJSON; readonly mutations: readonly Mutation[] }
-  | { readonly id: string; readonly kind: "completion"; readonly input: string; readonly config: FixtureConfigJSON; readonly today: string };
+  | { readonly id: string; readonly kind: "completion"; readonly input: string; readonly config: FixtureConfigJSON; readonly today: string }
+  | {
+      readonly id: string;
+      readonly kind: "insertion";
+      readonly content: string;
+      readonly config: FixtureConfigJSON;
+      readonly heading?: { readonly text: string; readonly level: number; readonly line: number };
+      readonly insert: string;
+    };
 
 const dateText = (value: DateValue | null): string | null =>
   value === null ? null : value.kind === "valid" ? calendarDateToISOString(value.date) : `invalid:${value.raw}`;
@@ -118,6 +127,7 @@ function run(testCase: Case): unknown {
         taskCount: document.tasks.length,
         frontmatterTags: document.frontmatterTags.map((tag) => tag.raw),
         roundTrips: reserializeDocument(document) === testCase.content,
+        headings: document.headings.map((heading) => ({ line: heading.lineIndex, level: heading.level, text: heading.text })),
         tasks: document.tasks.map((task) => ({
           line: task.location?.lineIndex ?? null,
           raw: task.raw,
@@ -145,6 +155,15 @@ function run(testCase: Case): unknown {
         }
       }
       return { ok: true, serialized: TaskSerializer.serialize(task) };
+    }
+    case "insertion": {
+      const document = parseDocument(testCase.content, "fuzz.md", configuration);
+      const heading = testCase.heading;
+      const plan =
+        heading === undefined
+          ? appendEdit(testCase.insert, document)
+          : insertEdit(testCase.insert, { lineIndex: heading.line, level: heading.level, text: heading.text }, document);
+      return plan === null ? { found: false } : { content: applyEdit(plan.edit, document, plan.preferringLineIndex) };
     }
     case "completion": {
       let task: ParsedTask;

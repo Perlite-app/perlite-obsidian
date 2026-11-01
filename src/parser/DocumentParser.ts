@@ -35,7 +35,19 @@ export interface ParsedDocument {
   readonly filePath: string;
   readonly tasks: readonly ParsedTask[];
   readonly frontmatterTags: readonly TaskTag[];
+  readonly headings: readonly DocumentHeading[];
   readonly lines: readonly DocumentLine[];
+  /** Where a code fence opens that never closes — everything from there to the end of
+   * the file is code. `insertEdit` (`write/documentEditor.ts`) must not insert into it. */
+  readonly unclosedFenceLineIndex: number | null;
+}
+
+/** An ATX heading (`#` through `######`) outside frontmatter and code fences — the same
+ * headings a task's `parentHeading` comes from. `text` is stripped the same way. */
+export interface DocumentHeading {
+  readonly lineIndex: number;
+  readonly level: number;
+  readonly text: string;
 }
 
 /** Reassembles the document into its original text. Byte-identical to the input
@@ -58,7 +70,9 @@ export function parseDocument(
   const inheritedTags = configuration.frontmatterTagInheritance ? frontmatterTags : [];
 
   const tasks: ParsedTask[] = [];
+  const headings: DocumentHeading[] = [];
   let fence: FenceState | null = null;
+  let fenceStart: number | null = null;
   let currentHeading: string | null = null;
 
   for (let index = 0; index < lines.length; index++) {
@@ -76,6 +90,7 @@ export function parseDocument(
     const opened = detectFenceOpen(trimmed);
     if (opened !== null) {
       fence = opened;
+      fenceStart = index;
       continue;
     }
     // Heading state has to be tracked after fence handling, not before: a line starting
@@ -85,6 +100,7 @@ export function parseDocument(
     const heading = atxHeadingText(trimmed);
     if (heading !== null) {
       currentHeading = heading;
+      headings.push({ lineIndex: index, level: /^#*/.exec(trimmed)![0].length, text: heading });
       continue;
     }
 
@@ -97,7 +113,7 @@ export function parseDocument(
     }
   }
 
-  return { filePath, tasks, frontmatterTags, lines };
+  return { filePath, tasks, frontmatterTags, headings, lines, unclosedFenceLineIndex: fence === null ? null : fenceStart };
 }
 
 // --- Line splitting --------------------------------------------------------------------
