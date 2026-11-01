@@ -66,11 +66,8 @@ const DIGITS_ONLY = /^\d+$/;
  * which decides whether an out-of-range date is invalid while still preserving the raw
  * text verbatim.
  *
- * Deliberate narrow divergence from the Swift original: Swift's `Int(String)` accepts an
- * optional leading `+`/`-` sign; this only requires digits. Not believed to affect any
- * real fixture — a signed 4-digit year group is not a shape any conformance fixture (or
- * realistic vault content) uses, and `split("-")` on a leading `-` already produces more
- * than 3 parts on both sides, rejecting the input before signedness would even matter.
+ * Every group must be ASCII digits — Swift used to accept a leading `+` (`Int("+202")`),
+ * a divergence the conformance corpus's differential fuzzing turned up; both now reject it.
  */
 export function parseCalendarDate(input: string): CalendarDate | null {
   const parts = input.split("-");
